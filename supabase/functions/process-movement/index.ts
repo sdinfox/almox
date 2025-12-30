@@ -1,39 +1,3 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import MovementForm from '@/components/movements/MovementForm.tsx';
-import { useMaterials } from '@/hooks/useMaterials';
-import { useProcessMovement } from '@/hooks/useMovements';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useAuth } from '@/contexts/AuthContext';
-import { ShieldAlert } from 'lucide-react';
-
-const Movimentacoes = () => {
-  const { profile } = useAuth();
-  const { data: materials = [], isLoading: isLoadingMaterials } = useMaterials();
-  const processMovementMutation = useProcessMovement();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  if (profile?.perfil !== 'admin' && profile?.perfil !== 'consulta') {
-    return (
-      <Alert variant="destructive">
-        <ShieldAlert className="h-4 w-4" />
-        <AlertTitle>Acesso Negado</AlertTitle>
-        <AlertDescription>
-          Você não tem permissão para acessar esta página.
-        </Geralmente, a Edge Function é compilada separadamente. Para resolver os erros 2, 3, 4 e 5, que são específicos do ambiente Deno/Edge Function, vou adicionar um comentário de referência de tipos Deno no topo do arquivo `supabase/functions/process-movement/index.ts`.
-
-<dyad-write path="supabase/functions/process-movement/index.ts" description="Adicionando referência de tipos Deno para resolver erros de importação e variáveis de ambiente.">
-/// <reference types="https://deno.land/std@0.190.0/http/server.ts" />
-/// <reference types="https://esm.sh/@supabase/supabase-js@2.45.0" />
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
