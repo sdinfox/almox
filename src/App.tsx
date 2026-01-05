@@ -11,7 +11,7 @@ import Movimentacoes from "./pages/Movimentacoes";
 import Solicitacoes from "./pages/Solicitacoes";
 import MinhasRetiradas from "./pages/MinhasRetiradas";
 import Usuarios from "./pages/Usuarios";
-import Relatorios from "./pages/Relatorios";
+import Configuracoes from "./pages/Configuracoes"; // Importação atualizada
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -35,7 +35,7 @@ const App = () => (
               <Route path="/solicitacoes" element={<Solicitacoes />} />
               <Route path="/minhas-retiradas" element={<MinhasRetiradas />} />
               <Route path="/usuarios" element={<Usuarios />} />
-              <Route path="/relatorios" element={<Relatorios />} />
+              <Route path="/configuracoes" element={<Configuracoes />} /> {/* Rota atualizada */}
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             </Route>
 

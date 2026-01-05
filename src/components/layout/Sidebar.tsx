@@ -7,9 +7,8 @@ import {
   Package,
   Users,
   ListChecks,
-  FileText,
+  Settings, // Alterado de FileText para Settings
   LogOut,
-  Menu,
   X,
   ArrowLeftRight,
 } from 'lucide-react';
@@ -17,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { showError } from '@/utils/toast';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useLogoUrl } from '@/hooks/useConfig'; // Importando o hook do logo
 
 interface NavItem {
   href: string;
@@ -32,7 +32,7 @@ const navItems: NavItem[] = [
   { href: '/solicitacoes', label: 'Solicitações', icon: ListChecks, roles: ['admin'] },
   { href: '/minhas-retiradas', label: 'Minhas Retiradas', icon: ListChecks, roles: ['retirada'] },
   { href: '/usuarios', label: 'Usuários', icon: Users, roles: ['admin'] },
-  { href: '/relatorios', label: 'Relatórios', icon: FileText, roles: ['admin'] },
+  { href: '/configuracoes', label: 'Configurações', icon: Settings, roles: ['admin'] }, // Item atualizado
 ];
 
 interface SidebarProps {
@@ -42,6 +42,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
   const { profile } = useAuth();
+  const { data: logoUrl } = useLogoUrl(); // Usando o hook do logo
   const isMobile = useIsMobile();
 
   const handleLogout = async () => {
@@ -70,8 +71,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
           !isMobile && "translate-x-0",
         )}
       >
-        <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
-          <h1 className="text-xl font-bold text-sidebar-primary">Almoxarifado</h1>
+        <div className="p-4 border-b border-sidebar-border flex items-center justify-between h-16">
+          {logoUrl ? (
+            <img src={logoUrl} alt="Logo" className="max-h-full max-w-full object-contain py-2" />
+          ) : (
+            <h1 className="text-xl font-bold text-sidebar-primary">Almoxarifado</h1>
+          )}
           {isMobile && (
             <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
               <X className="h-5 w-5 text-sidebar-foreground" />

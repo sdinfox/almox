@@ -2,13 +2,17 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package, Users, ListChecks, AlertTriangle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { usePendingRequests } from "@/hooks/useMovements";
+import { usePendingRequests, useMovementsHistory } from "@/hooks/useMovements";
 import { useMaterials } from "@/hooks/useMaterials";
+import MovementTable from "@/components/movements/MovementTable"; // Importando a tabela
 
 const Index = () => {
   const { profile, isLoading } = useAuth();
   const { data: pendingRequests = [], isLoading: isLoadingRequests } = usePendingRequests();
   const { data: materials = [], isLoading: isLoadingMaterials } = useMaterials();
+  // Buscando as últimas 5 movimentações
+  const { data: movements = [], isLoading: isLoadingMovements } = useMovementsHistory();
+  const recentMovements = movements.slice(0, 5);
 
   if (isLoading) {
     // O ProtectedRoute já lida com o estado de carregamento, mas mantemos um fallback
@@ -88,9 +92,12 @@ const Index = () => {
               </Card>
             </div>
             <Separator />
-            <h3 className="text-xl font-semibold">Últimas Movimentações (Admin View)</h3>
+            <h3 className="text-xl font-semibold">Últimas 5 Movimentações</h3>
             <Card className="p-4">
-              <p className="text-muted-foreground">Tabela de movimentações será adicionada aqui.</p>
+              <MovementTable 
+                movements={recentMovements} 
+                isLoading={isLoadingMovements} 
+              />
             </Card>
           </div>
         );
