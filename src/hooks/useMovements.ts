@@ -23,7 +23,7 @@ const fetchMovementsHistory = async (): Promise<MovementWithDetails[]> => {
     .from('movimentacoes')
     .select(`
       *,
-      material:material_id (nome, codigo, unidade_medida),
+      material:material_id (nome, codigo, unidade_medida, quantidade_atual),
       user:user_id (nome, email),
       approver:aprovado_por (nome, email)
     `)
@@ -32,7 +32,6 @@ const fetchMovementsHistory = async (): Promise<MovementWithDetails[]> => {
   if (error) {
     throw new Error(error.message);
   }
-  // Note: This history fetch doesn't strictly need quantidade_atual, but the type now includes it.
   return data as MovementWithDetails[];
 };
 
