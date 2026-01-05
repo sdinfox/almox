@@ -30,6 +30,8 @@ const fetchMovementsHistory = async (): Promise<MovementWithDetails[]> => {
     .order('created_at', { ascending: false });
 
   if (error) {
+    // Adicionando log de erro para debug
+    console.error("Erro ao buscar histórico de movimentações:", error);
     throw new Error(error.message);
   }
   return data as MovementWithDetails[];
@@ -58,6 +60,7 @@ const fetchMyPendingWithdrawals = async (): Promise<MovementWithDetails[]> => {
     .order('created_at', { ascending: false });
 
   if (error) {
+    console.error("Erro ao buscar minhas solicitações pendentes:", error);
     throw new Error(error.message);
   }
   return data as MovementWithDetails[];
@@ -85,6 +88,7 @@ const fetchPendingRequests = async (): Promise<MovementWithDetails[]> => {
     .order('created_at', { ascending: true });
 
   if (error) {
+    console.error("Erro ao buscar todas as solicitações pendentes:", error);
     throw new Error(error.message);
   }
   return data as MovementWithDetails[];
