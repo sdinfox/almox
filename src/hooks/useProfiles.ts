@@ -6,6 +6,7 @@ import { showError, showSuccess } from '@/utils/toast';
 const PROFILES_QUERY_KEY = ['profiles'];
 const CREATE_USER_FUNCTION_URL = 'https://xleljhiyuhtvzjlxzawy.supabase.co/functions/v1/create-user';
 const DELETE_USER_FUNCTION_URL = 'https://xleljhiyuhtvzjlxzawy.supabase.co/functions/v1/delete-user';
+const UPDATE_PASSWORD_FUNCTION_URL = 'https://xleljhiyuhtvzjlxzawy.supabase.co/functions/v1/update-user-password';
 
 // --- Fetch All Profiles ---
 const fetchProfiles = async (): Promise<UserProfile[]> => {
@@ -83,9 +84,6 @@ const updateFullProfile = async ({ id, nome, perfil }: UpdateFullProfilePayload)
     throw new Error(error.message);
   }
   
-  // 2. Opcional: Atualizar o nome no auth.users metadata (para consistência)
-  // Isso requer a Service Role Key, então vamos pular por enquanto para manter a simplicidade e usar apenas a tabela profiles.
-  
   return data as UserProfile;
 };
 
@@ -100,6 +98,50 @@ export const useUpdateFullProfile = () => {
     },
     onError: (error) => {
       showError('Erro ao atualizar dados do usuário: ' + error.message);
+    },
+  });
+};
+
+// --- Update User Password (Admin only) ---
+interface UpdatePasswordPayload {
+  userId: string;
+  password: string;
+}
+
+const updateUserPassword = async (payload: UpdatePasswordPayload): Promise<void> => {
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  if (!session) {
+    throw new Error('Usuário não autenticado.');
+  }
+
+  const response = await fetch(UPDATE_PASSWORD_FUNCTION_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ userId: payload.userId, password: payload.password }),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.error || 'Erro desconhecido ao atualizar senha.');
+  }
+};
+
+export const useUpdateUserPassword = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updateUserPassword,
+    onSuccess: () => {
+      // Não precisa invalidar perfis, apenas notificar
+      showSuccess('Senha do usuário atualizada com sucesso!');
+    },
+    onError: (error) => {
+      showError('Erro ao atualizar senha: ' + error.message);
     },
   });
 };

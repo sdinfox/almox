@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useProfiles, useCreateUser, useUpdateFullProfile } from '@/hooks/useProfiles';
+import { useProfiles, useCreateUser, useUpdateFullProfile, useUpdateUserPassword } from '@/hooks/useProfiles';
 import UserTable from '@/components/users/UserTable';
 import UserForm from '@/components/users/UserForm';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -20,6 +20,7 @@ const Usuarios = () => {
   const { data: profiles = [], isLoading, error } = useProfiles();
   const createUserMutation = useCreateUser();
   const updateProfileMutation = useUpdateFullProfile();
+  const updatePasswordMutation = useUpdateUserPassword();
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserProfile | undefined>(undefined);
@@ -49,9 +50,22 @@ const Usuarios = () => {
   const handleSubmit = (values: any) => {
     if (editingUser) {
       // Edição
-      updateProfileMutation.mutate({ ...values, id: editingUser.id }, {
-        onSuccess: handleCloseDialog,
-      });
+      const { password, ...profileUpdates } = values;
+      
+      // 1. Atualizar Nome e Perfil
+      const profilePromise = updateProfileMutation.mutateAsync({ ...profileUpdates, id: editingUser.id });
+      
+      // 2. Se a senha foi fornecida, atualizar a senha
+      const passwordPromise = password 
+        ? updatePasswordMutation.mutateAsync({ userId: editingUser.id, password })
+        : Promise.resolve();
+
+      Promise.all([profilePromise, passwordPromise])
+        .then(handleCloseDialog)
+        .catch(() => {
+          // O tratamento de erro já é feito nas mutações individuais (showError)
+        });
+
     } else {
       // Criação
       createUserMutation.mutate(values, {
@@ -60,7 +74,7 @@ const Usuarios = () => {
     }
   };
 
-  const isPending = createUserMutation.isPending || updateProfileMutation.isPending;
+  const isPending = createUserMutation.isPending || updateProfileMutation.isPending || updatePasswordMutation.isPending;
 
   return (
     <div className="space-y-6">

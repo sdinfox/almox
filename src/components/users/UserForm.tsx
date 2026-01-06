@@ -36,7 +36,7 @@ const createUserSchema = baseUserSchema.extend({
   password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres.'),
 });
 
-// Esquema para Edição (senha opcional e não usada aqui, mas mantemos o email para exibição)
+// Esquema para Edição (senha opcional, mas se preenchida, deve ter min 6)
 const editUserSchema = baseUserSchema.extend({
   password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres.').optional().or(z.literal('')),
 });
@@ -70,7 +70,7 @@ const UserForm: React.FC<UserFormProps> = ({ initialData, onSubmit, isPending })
   });
 
   const handleSubmit = (values: UserFormValues | EditUserFormValues) => {
-    // Remove a senha se estiver vazia ou se estiver editando
+    // Se estiver editando e a senha estiver vazia, remove do payload para não tentar atualizar
     const payload = {
         ...values,
         password: isEditing && !values.password ? undefined : values.password,
@@ -111,21 +111,23 @@ const UserForm: React.FC<UserFormProps> = ({ initialData, onSubmit, isPending })
             </FormItem>
           )}
         />
-        {!isEditing && (
-            <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Senha</FormLabel>
-                <FormControl>
-                    <Input type="password" placeholder="Defina uma senha temporária" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-        )}
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{isEditing ? 'Nova Senha (Opcional)' : 'Senha'}</FormLabel>
+              <FormControl>
+                <Input 
+                    type="password" 
+                    placeholder={isEditing ? 'Deixe em branco para manter a senha atual' : 'Defina uma senha temporária'} 
+                    {...field} 
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="perfil"
