@@ -5,6 +5,7 @@ import { showError, showSuccess } from '@/utils/toast';
 
 const PROFILES_QUERY_KEY = ['profiles'];
 const CREATE_USER_FUNCTION_URL = 'https://xleljhiyuhtvzjlxzawy.supabase.co/functions/v1/create-user';
+const DELETE_USER_FUNCTION_URL = 'https://xleljhiyuhtvzjlxzawy.supabase.co/functions/v1/delete-user';
 
 // --- Fetch All Profiles ---
 const fetchProfiles = async (): Promise<UserProfile[]> => {
@@ -27,7 +28,7 @@ export const useProfiles = () => {
   });
 };
 
-// --- Update Profile Role ---
+// --- Update Profile Role (Used for quick role change in table) ---
 type UpdateProfilePayload = {
   id: string;
   perfil: UserProfile['perfil'];
@@ -62,10 +63,52 @@ export const useUpdateProfileRole = () => {
   });
 };
 
+// --- Update Full Profile (Name and Role) ---
+type UpdateFullProfilePayload = {
+  id: string;
+  nome: string;
+  perfil: UserProfile['perfil'];
+};
+
+const updateFullProfile = async ({ id, nome, perfil }: UpdateFullProfilePayload): Promise<UserProfile> => {
+  // 1. Atualizar o perfil (nome e perfil de acesso)
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ nome, perfil, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  
+  // 2. Opcional: Atualizar o nome no auth.users metadata (para consistência)
+  // Isso requer a Service Role Key, então vamos pular por enquanto para manter a simplicidade e usar apenas a tabela profiles.
+  
+  return data as UserProfile;
+};
+
+export const useUpdateFullProfile = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updateFullProfile,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: PROFILES_QUERY_KEY });
+      showSuccess('Dados do usuário atualizados com sucesso!');
+    },
+    onError: (error) => {
+      showError('Erro ao atualizar dados do usuário: ' + error.message);
+    },
+  });
+};
+
+
 // --- Create New User (Admin only) ---
 interface CreateUserPayload {
   email: string;
-  password?: string;
+  password: string;
   nome: string;
   perfil: UserProfile['perfil'];
 }
@@ -106,6 +149,45 @@ export const useCreateUser = () => {
     },
     onError: (error) => {
       showError('Erro ao criar usuário: ' + error.message);
+    },
+  });
+};
+
+// --- Delete User (Admin only) ---
+const deleteUser = async (userId: string): Promise<void> => {
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  if (!session) {
+    throw new Error('Usuário não autenticado.');
+  }
+
+  const response = await fetch(DELETE_USER_FUNCTION_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ userId }),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.error || 'Erro desconhecido ao excluir usuário.');
+  }
+};
+
+export const useDeleteUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: PROFILES_QUERY_KEY });
+      showSuccess('Usuário excluído com sucesso!');
+    },
+    onError: (error) => {
+      showError('Erro ao excluir usuário: ' + error.message);
     },
   });
 };

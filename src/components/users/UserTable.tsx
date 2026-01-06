@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { UserProfile } from '@/types';
 import {
   Table,
@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useUpdateProfileRole } from '@/hooks/useProfiles';
+import { useUpdateProfileRole, useDeleteUser } from '@/hooks/useProfiles';
 import {
   Select,
   SelectContent,
@@ -18,12 +18,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, User } from 'lucide-react';
+import { Loader2, User, Edit, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface UserTableProps {
   profiles: UserProfile[];
   isLoading: boolean;
   currentUserId: string;
+  onEdit: (profile: UserProfile) => void;
 }
 
 const roleMap: Record<UserProfile['perfil'], string> = {
@@ -32,11 +44,18 @@ const roleMap: Record<UserProfile['perfil'], string> = {
   retirada: 'Retirada',
 };
 
-const UserTable: React.FC<UserTableProps> = ({ profiles, isLoading, currentUserId }) => {
+const UserTable: React.FC<UserTableProps> = ({ profiles, isLoading, currentUserId, onEdit }) => {
   const updateRoleMutation = useUpdateProfileRole();
+  const deleteUserMutation = useDeleteUser();
+  const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
 
   const handleRoleChange = (userId: string, newPerfil: UserProfile['perfil']) => {
     updateRoleMutation.mutate({ id: userId, perfil: newPerfil });
+  };
+
+  const handleDelete = (userId: string) => {
+    deleteUserMutation.mutate(userId);
+    setUserToDelete(null);
   };
 
   if (isLoading) {
@@ -60,56 +79,102 @@ const UserTable: React.FC<UserTableProps> = ({ profiles, isLoading, currentUserI
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Nome</TableHead>
-          <TableHead>Email</TableHead>
-          <TableHead className="w-[200px]">Perfil</TableHead>
-          <TableHead className="text-right">Status</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {profiles.map((profile) => {
-          const isCurrentUser = profile.id === currentUserId;
-          const isUpdating = updateRoleMutation.isPending && updateRoleMutation.variables?.id === profile.id;
+    <>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Nome</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead className="w-[200px]">Perfil</TableHead>
+            <TableHead className="text-right w-[150px]">Ações</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {profiles.map((profile) => {
+            const isCurrentUser = profile.id === currentUserId;
+            const isUpdating = updateRoleMutation.isPending && updateRoleMutation.variables?.id === profile.id;
+            const isDeleting = deleteUserMutation.isPending && deleteUserMutation.variables === profile.id;
 
-          return (
-            <TableRow key={profile.id}>
-              <TableCell className="font-medium">{profile.nome || 'N/A'}</TableCell>
-              <TableCell>{profile.email}</TableCell>
-              <TableCell>
-                <Select
-                  value={profile.perfil}
-                  onValueChange={(value: UserProfile['perfil']) => handleRoleChange(profile.id, value)}
-                  disabled={isCurrentUser || isUpdating}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Selecione o Perfil" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(roleMap).map(([key, label]) => (
-                      <SelectItem key={key} value={key}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </TableCell>
-              <TableCell className="text-right">
-                {isUpdating ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-primary inline-block" />
-                ) : isCurrentUser ? (
-                  <Badge variant="secondary">Você</Badge>
-                ) : (
-                  <Badge variant="outline">{roleMap[profile.perfil]}</Badge>
-                )}
-              </TableCell>
-            </TableRow>
-          );
-        })}
-      </TableBody>
-    </Table>
+            return (
+              <TableRow key={profile.id}>
+                <TableCell className="font-medium">{profile.nome || 'N/A'}</TableCell>
+                <TableCell>{profile.email}</TableCell>
+                <TableCell>
+                  <Select
+                    value={profile.perfil}
+                    onValueChange={(value: UserProfile['perfil']) => handleRoleChange(profile.id, value)}
+                    disabled={isCurrentUser || isUpdating || isDeleting}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Selecione o Perfil" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(roleMap).map(([key, label]) => (
+                        <SelectItem key={key} value={key}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+                <TableCell className="text-right space-x-2">
+                  {isCurrentUser ? (
+                    <Badge variant="secondary">Você</Badge>
+                  ) : (
+                    <>
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        onClick={() => onEdit(profile)}
+                        disabled={isUpdating || isDeleting}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        size="icon" 
+                        onClick={() => setUserToDelete(profile)}
+                        disabled={isUpdating || isDeleting}
+                      >
+                        {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                      </Button>
+                    </>
+                  )}
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+
+      {/* Modal de Confirmação de Exclusão */}
+      <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Tem certeza que deseja excluir este usuário?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é irreversível. O usuário 
+              <span className="font-semibold ml-1">{userToDelete?.nome || userToDelete?.email}</span> 
+              será permanentemente removido do sistema.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteUserMutation.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => handleDelete(userToDelete!.id)}
+              disabled={deleteUserMutation.isPending}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {deleteUserMutation.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                'Excluir Usuário'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 

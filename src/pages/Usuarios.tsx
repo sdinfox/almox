@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useProfiles, useCreateUser } from '@/hooks/useProfiles';
+import { useProfiles, useCreateUser, useUpdateFullProfile } from '@/hooks/useProfiles';
 import UserTable from '@/components/users/UserTable';
 import UserForm from '@/components/users/UserForm';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -13,12 +13,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { UserProfile } from '@/types';
 
 const Usuarios = () => {
   const { user, profile } = useAuth();
   const { data: profiles = [], isLoading, error } = useProfiles();
   const createUserMutation = useCreateUser();
+  const updateProfileMutation = useUpdateFullProfile();
+  
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserProfile | undefined>(undefined);
 
   if (profile?.perfil !== 'admin') {
     return (
@@ -32,13 +36,31 @@ const Usuarios = () => {
     );
   }
 
-  const handleCreateUser = (values: any) => {
-    createUserMutation.mutate(values, {
-      onSuccess: () => {
-        setIsDialogOpen(false);
-      },
-    });
+  const handleOpenDialog = (userToEdit?: UserProfile) => {
+    setEditingUser(userToEdit);
+    setIsDialogOpen(true);
   };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setEditingUser(undefined);
+  };
+
+  const handleSubmit = (values: any) => {
+    if (editingUser) {
+      // Edição
+      updateProfileMutation.mutate({ ...values, id: editingUser.id }, {
+        onSuccess: handleCloseDialog,
+      });
+    } else {
+      // Criação
+      createUserMutation.mutate(values, {
+        onSuccess: handleCloseDialog,
+      });
+    }
+  };
+
+  const isPending = createUserMutation.isPending || updateProfileMutation.isPending;
 
   return (
     <div className="space-y-6">
@@ -46,18 +68,19 @@ const Usuarios = () => {
         <h1 className="text-3xl font-bold">Gerenciamento de Usuários</h1>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => setIsDialogOpen(true)}>
+            <Button onClick={() => handleOpenDialog()}>
               <UserPlus className="mr-2 h-4 w-4" />
               Novo Usuário
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[450px]">
             <DialogHeader>
-              <DialogTitle>Criar Novo Usuário</DialogTitle>
+              <DialogTitle>{editingUser ? 'Editar Usuário' : 'Criar Novo Usuário'}</DialogTitle>
             </DialogHeader>
             <UserForm 
-              onSubmit={handleCreateUser} 
-              isPending={createUserMutation.isPending} 
+              initialData={editingUser}
+              onSubmit={handleSubmit} 
+              isPending={isPending} 
             />
           </DialogContent>
         </Dialog>
@@ -76,6 +99,7 @@ const Usuarios = () => {
         profiles={profiles} 
         isLoading={isLoading} 
         currentUserId={user?.id || ''}
+        onEdit={handleOpenDialog}
       />
     </div>
   );
