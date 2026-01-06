@@ -1,9 +1,20 @@
 import React from 'react';
-import { Menu, User } from 'lucide-react';
+import { Menu, User, LogOut, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { showError } from '@/utils/toast';
 
 interface HeaderProps {
   setIsOpen: (isOpen: boolean) => void;
@@ -15,6 +26,13 @@ const Header: React.FC<HeaderProps> = ({ setIsOpen }) => {
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+  };
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      showError("Erro ao fazer logout: " + error.message);
+    }
   };
 
   return (
@@ -35,17 +53,53 @@ const Header: React.FC<HeaderProps> = ({ setIsOpen }) => {
         {/* Espaço para título ou barra de pesquisa futura */}
       </div>
 
-      <div className="flex items-center space-x-3">
-        <div className="hidden sm:block text-right">
-          <p className="text-sm font-medium text-foreground">{profile?.nome || profile?.email}</p>
-          <p className="text-xs text-muted-foreground capitalize">{profile?.perfil}</p>
-        </div>
-        <Avatar>
-          <AvatarFallback className="bg-primary text-primary-foreground">
-            {profile?.nome ? getInitials(profile.nome) : <User className="h-4 w-4" />}
-          </AvatarFallback>
-        </Avatar>
-      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
+            <div className="flex items-center space-x-3 cursor-pointer">
+              <div className="hidden sm:block text-right">
+                <p className="text-sm font-medium text-foreground">{profile?.nome || profile?.email}</p>
+                <p className="text-xs text-muted-foreground capitalize">{profile?.perfil}</p>
+              </div>
+              <Avatar>
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  {profile?.nome ? getInitials(profile.nome) : <User className="h-4 w-4" />}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56" align="end" forceMount>
+          <DropdownMenuLabel className="font-normal">
+            <div className="flex flex-col space-y-1">
+              <p className="text-sm font-medium leading-none">{profile?.nome || 'Usuário'}</p>
+              <p className="text-xs leading-none text-muted-foreground">
+                {profile?.email}
+              </p>
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link to="/profile">
+              <User className="mr-2 h-4 w-4" />
+              <span>Meu Perfil</span>
+            </Link>
+          </DropdownMenuItem>
+          {profile?.perfil === 'admin' && (
+            <DropdownMenuItem asChild>
+              <Link to="/configuracoes">
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Configurações</span>
+              </Link>
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Sair</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </header>
   );
 };

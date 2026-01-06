@@ -11,7 +11,8 @@ import Movimentacoes from "./pages/Movimentacoes";
 import Solicitacoes from "./pages/Solicitacoes";
 import MinhasRetiradas from "./pages/MinhasRetiradas";
 import Usuarios from "./pages/Usuarios";
-import Configuracoes from "./pages/Configuracoes"; // Importação atualizada
+import Configuracoes from "./pages/Configuracoes";
+import Profile from "./pages/Profile"; // Importação da nova página
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -35,7 +36,8 @@ const App = () => (
               <Route path="/solicitacoes" element={<Solicitacoes />} />
               <Route path="/minhas-retiradas" element={<MinhasRetiradas />} />
               <Route path="/usuarios" element={<Usuarios />} />
-              <Route path="/configuracoes" element={<Configuracoes />} /> {/* Rota atualizada */}
+              <Route path="/configuracoes" element={<Configuracoes />} />
+              <Route path="/profile" element={<Profile />} /> {/* Nova Rota */}
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             </Route>
 
