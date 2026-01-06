@@ -15,6 +15,7 @@ const fetchLogoUrl = async (): Promise<string | null> => {
 
   if (error && error.code !== 'PGRST116') { // PGRST116 = No rows found
     // Se for um erro diferente de "nenhuma linha encontrada", lançamos o erro
+    console.error("Erro ao buscar configuração do logo:", error.message);
     throw new Error(error.message);
   }
   
@@ -26,6 +27,7 @@ const fetchLogoUrl = async (): Promise<string | null> => {
       .from(LOGO_BUCKET)
       .getPublicUrl(url);
       
+    console.log("Generated Logo URL:", publicUrlData.publicUrl); // LOG DE DEBUG
     return publicUrlData.publicUrl;
   }
 
@@ -58,6 +60,7 @@ const uploadLogo = async (file: File): Promise<string> => {
     });
 
   if (uploadError) {
+    console.error('Upload Error:', uploadError); // LOG DE DEBUG
     throw new Error('Erro ao fazer upload do arquivo: ' + uploadError.message);
   }
 
@@ -75,7 +78,11 @@ const uploadLogo = async (file: File): Promise<string> => {
   // 3. Se houver um logo antigo, deletá-lo
   const oldFilePath = currentConfig?.valor;
   if (oldFilePath) {
-    await supabase.storage.from(LOGO_BUCKET).remove([oldFilePath]);
+    // Não precisamos esperar o delete, mas logamos se houver erro
+    const { error: removeOldError } = await supabase.storage.from(LOGO_BUCKET).remove([oldFilePath]);
+    if (removeOldError) {
+      console.warn('Warning: Failed to remove old logo file:', removeOldError.message);
+    }
   }
 
   // 4. Atualizar a tabela de configurações com o novo caminho
