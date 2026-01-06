@@ -27,7 +27,6 @@ const fetchLogoUrl = async (): Promise<string | null> => {
       .from(LOGO_BUCKET)
       .getPublicUrl(url);
       
-    console.log("Generated Logo URL:", publicUrlData.publicUrl); // LOG DE DEBUG
     return publicUrlData.publicUrl;
   }
 
