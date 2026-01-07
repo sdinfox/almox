@@ -55,17 +55,19 @@ const Header: React.FC<HeaderProps> = ({ setIsOpen }) => {
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
+          <Button variant="ghost" className="relative h-10 pr-2 rounded-full">
             <div className="flex items-center space-x-3 cursor-pointer">
-              <div className="hidden sm:block text-right">
-                <p className="text-sm font-medium text-foreground">{profile?.nome || profile?.email}</p>
-                <p className="text-xs text-muted-foreground capitalize">{profile?.perfil}</p>
-              </div>
-              <Avatar>
-                <AvatarFallback className="bg-primary text-primary-foreground">
+              {/* Avatar à esquerda do texto */}
+              <Avatar className="h-8 w-8">
+                <AvatarFallback className="bg-primary text-primary-foreground text-sm">
                   {profile?.nome ? getInitials(profile.nome) : <User className="h-4 w-4" />}
                 </AvatarFallback>
               </Avatar>
+              {/* Texto à direita do Avatar */}
+              <div className="hidden sm:block text-left">
+                <p className="text-sm font-medium leading-none text-foreground">{profile?.nome || profile?.email}</p>
+                <p className="text-xs leading-none text-muted-foreground capitalize">{profile?.perfil}</p>
+              </div>
             </div>
           </Button>
         </DropdownMenuTrigger>
@@ -85,14 +87,15 @@ const Header: React.FC<HeaderProps> = ({ setIsOpen }) => {
               <span>Meu Perfil</span>
             </Link>
           </DropdownMenuItem>
-          {profile?.perfil === 'admin' && (
+          {/* Removendo o link de Configurações conforme solicitado */}
+          {/* {profile?.perfil === 'admin' && (
             <DropdownMenuItem asChild>
               <Link to="/configuracoes">
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Configurações</span>
               </Link>
             </DropdownMenuItem>
-          )}
+          )} */}
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" />
