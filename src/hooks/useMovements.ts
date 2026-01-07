@@ -115,7 +115,6 @@ const updateMovementStatus = async ({ movementId, status }: UpdateStatusPayload)
   }
 
   // 1. Fetch current material quantity and movement details
-  // We need to fetch the material quantity again right before the transaction to ensure it's fresh.
   const { data: movement, error: fetchError } = await supabase
     .from('movimentacoes')
     .select(`
@@ -130,7 +129,7 @@ const updateMovementStatus = async ({ movementId, status }: UpdateStatusPayload)
   }
 
   const material_id = movement.material_id;
-  const quantidade_anterior = (movement.material as any).quantidade_atual; // Accessing nested property
+  const quantidade_anterior = (movement.material as any).quantidade_atual;
   const quantidade = movement.quantidade;
   let quantidade_nova = quantidade_anterior;
 
@@ -140,49 +139,36 @@ const updateMovementStatus = async ({ movementId, status }: UpdateStatusPayload)
     if (quantidade_nova < 0) {
       throw new Error(`Estoque insuficiente para aprovar esta retirada. Disponível: ${quantidade_anterior}. Solicitado: ${quantidade}.`);
     }
-  } else {
-    // If rejected, stock remains the same
-    quantidade_nova = quantidade_anterior;
-  }
+    
+    // 2. Se aprovado, atualiza o estoque do material
+    const { error: materialUpdateError } = await supabase
+      .from('materiais')
+      .update({ quantidade_atual: quantidade_nova, updated_at: new Date().toISOString() })
+      .eq('id', material_id);
 
-  // 2. Update movement and material using the stored procedure (only if approved)
-  if (status === 'aprovada') {
-    // Use RPC to ensure atomicity of movement insertion and material update
-    const { data: movementData, error: movementError } = await supabase.rpc('process_stock_movement', {
-      p_material_id: material_id,
-      p_user_id: movement.user_id, // Original requester
-      p_tipo: movement.tipo,
-      p_quantidade: quantidade,
-      p_quantidade_anterior: quantidade_anterior,
-      p_quantidade_nova: quantidade_nova,
-      p_observacao: movement.observacao,
-      p_status: status,
-      p_aprovado_por: user.id,
-    });
-
-    if (movementError) {
-      throw new Error(movementError.message);
+    if (materialUpdateError) {
+      throw new Error('Erro ao atualizar estoque do material: ' + materialUpdateError.message);
     }
-    return movementData[0] as Movimentacao;
+  } 
+  
+  // 3. Atualiza o status da movimentação (funciona para aprovada ou rejeitada)
+  const { data, error } = await supabase
+    .from('movimentacoes')
+    .update({ 
+      status: status, 
+      quantidade_anterior: quantidade_anterior, // Registra o estado do estoque no momento da aprovação/rejeição
+      quantidade_nova: quantidade_nova,
+      aprovado_por: user.id, 
+      aprovado_at: new Date().toISOString() 
+    })
+    .eq('id', movementId)
+    .select()
+    .single();
 
-  } else {
-    // 3. If rejected, just update the movement status
-    const { data, error } = await supabase
-      .from('movimentacoes')
-      .update({ 
-        status: status, 
-        aprovado_por: user.id, 
-        aprovado_at: new Date().toISOString() 
-      })
-      .eq('id', movementId)
-      .select()
-      .single();
-
-    if (error) {
-      throw new Error(error.message);
-    }
-    return data as Movimentacao;
+  if (error) {
+    throw new Error('Erro ao atualizar status da movimentação: ' + error.message);
   }
+  return data as Movimentacao;
 };
 
 export const useUpdateMovementStatus = () => {
@@ -283,6 +269,7 @@ const processMovement = async (payload: ProcessMovementPayload): Promise<Movimen
     throw new Error(result.error || 'Erro desconhecido ao processar movimentação.');
   }
 
+  // A Edge Function process-movement retorna um array de movimentações
   return result.movement[0] as Movimentacao;
 };
 
