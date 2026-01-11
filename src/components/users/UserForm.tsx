@@ -31,9 +31,9 @@ const baseUserSchema = z.object({
   }),
 });
 
-// Esquema para Criação (senha obrigatória)
+// Esquema para Criação (senha opcional, mas se fornecida, deve ter min 6)
 const createUserSchema = baseUserSchema.extend({
-  password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres.'),
+  password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres.').optional().or(z.literal('')),
 });
 
 // Esquema para Edição (senha opcional, mas se preenchida, deve ter min 6)
@@ -116,11 +116,11 @@ const UserForm: React.FC<UserFormProps> = ({ initialData, onSubmit, isPending })
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{isEditing ? 'Nova Senha (Opcional)' : 'Senha'}</FormLabel>
+              <FormLabel>{isEditing ? 'Nova Senha (Opcional)' : 'Senha (Opcional - Envia convite se vazio)'}</FormLabel>
               <FormControl>
                 <Input 
                     type="password" 
-                    placeholder={isEditing ? 'Deixe em branco para manter a senha atual' : 'Defina uma senha temporária'} 
+                    placeholder={isEditing ? 'Deixe em branco para manter a senha atual' : 'Deixe em branco para enviar convite por email'} 
                     {...field} 
                 />
               </FormControl>

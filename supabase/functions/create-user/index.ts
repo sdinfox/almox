@@ -25,6 +25,7 @@ serve(async (req) => {
     // 1. Autenticação do Admin (Verificar se quem chama é um Admin)
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
+      console.error("[create-user] Unauthorized: Missing Authorization header");
       return new Response(JSON.stringify({ error: 'Unauthorized: Missing Authorization header' }), {
         status: 401,
         headers: corsHeaders,
@@ -44,6 +45,7 @@ serve(async (req) => {
 
     const { data: { user: callingUser } } = await userClient.auth.getUser();
     if (!callingUser) {
+      console.error("[create-user] Unauthorized: Invalid token");
       return new Response(JSON.stringify({ error: 'Unauthorized: Invalid token' }), {
         status: 401,
         headers: corsHeaders,
@@ -58,6 +60,7 @@ serve(async (req) => {
       .single();
 
     if (profileError || profile?.perfil !== 'admin') {
+      console.error("[create-user] Forbidden: Only administrators can create users.");
       return new Response(JSON.stringify({ error: 'Forbidden: Only administrators can create users.' }), {
         status: 403,
         headers: corsHeaders,
@@ -69,6 +72,7 @@ serve(async (req) => {
     const { email, password, nome, perfil } = body;
 
     if (!email || !nome || !perfil) {
+      console.error("[create-user] Dados obrigatórios (email, nome, perfil) ausentes.");
       return new Response(JSON.stringify({ error: 'Dados obrigatórios (email, nome, perfil) ausentes.' }), {
         status: 400,
         headers: corsHeaders,
@@ -81,37 +85,70 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // 4. Criar o Usuário no Auth
-    const { data: newUser, error: authError } = await serviceRoleClient.auth.admin.createUser({
-      email: email,
-      password: password, // Se a senha for fornecida, cria o usuário. Se não, envia um convite.
-      email_confirm: true, // Confirma o email automaticamente
-      user_metadata: {
-        nome: nome,
-      },
-    });
+    let newUser;
+    let authError;
+
+    // 4. Criar o Usuário no Auth (Direto ou via Convite)
+    if (password) {
+      // Criação direta com senha fornecida (usuário confirmado, sem email de convite)
+      console.log(`[create-user] Creating user directly for ${email}`);
+      const result = await serviceRoleClient.auth.admin.createUser({
+        email: email,
+        password: password,
+        email_confirm: true, // Confirma o email automaticamente
+        user_metadata: {
+          nome: nome,
+        },
+      });
+      newUser = result.data;
+      authError = result.error;
+    } else {
+      // Envia convite por email (usuário não confirmado até clicar no link)
+      console.log(`[create-user] Inviting user by email for ${email}`);
+      const result = await serviceRoleClient.auth.admin.inviteUserByEmail(email, {
+        data: {
+          nome: nome,
+        },
+        // O redirectTo deve ser configurado no painel do Supabase para onde o usuário deve ir após definir a senha
+        // Usaremos a URL base do projeto como fallback
+        redirectTo: Deno.env.get('SUPABASE_URL'), 
+      });
+      newUser = result.data;
+      authError = result.error;
+    }
 
     if (authError) {
-      console.error('Erro ao criar usuário no Auth:', authError.message);
-      return new Response(JSON.stringify({ error: 'Erro ao criar usuário: ' + authError.message }), {
+      console.error('[create-user] Erro ao criar/convidar usuário no Auth:', authError.message);
+      return new Response(JSON.stringify({ error: 'Erro ao criar/convidar usuário: ' + authError.message }), {
         status: 500,
         headers: corsHeaders,
       });
     }
+    
+    // Se o usuário foi convidado, o ID é retornado, mas o perfil ainda precisa ser atualizado.
+    const userId = newUser.user.id;
 
     // 5. Atualizar o Perfil (para definir o perfil de acesso)
-    // O trigger handle_new_user já criou o perfil com o nome. Agora atualizamos o perfil.
+    // O trigger handle_new_user já criou o perfil com o nome (se for createUser).
+    // Se for inviteUserByEmail, o trigger só será acionado após o usuário confirmar o email.
+    // Para garantir que o perfil seja definido imediatamente, atualizamos aqui.
+    
+    // Nota: Se for inviteUserByEmail, o perfil pode não existir ainda. 
+    // Vamos tentar atualizar. Se falhar (404), significa que o trigger ainda não rodou.
+    // No entanto, o trigger handle_new_user é AFTER INSERT ON auth.users, então ele deve rodar imediatamente após createUser OU inviteUserByEmail.
+    
+    // Vamos garantir que o perfil seja atualizado com o perfil de acesso correto.
     const { data: updatedProfile, error: profileUpdateError } = await serviceRoleClient
       .from('profiles')
       .update({ perfil: perfil, updated_at: new Date().toISOString() })
-      .eq('id', newUser.user.id)
+      .eq('id', userId)
       .select()
       .single();
 
     if (profileUpdateError) {
-      console.error('Erro ao atualizar perfil:', profileUpdateError.message);
-      // Se falhar, o usuário foi criado, mas o perfil está incorreto.
-      return new Response(JSON.stringify({ error: 'Usuário criado, mas erro ao definir perfil: ' + profileUpdateError.message }), {
+      console.error('[create-user] Erro ao atualizar perfil:', profileUpdateError.message);
+      // Se falhar, o usuário foi criado/convidado, mas o perfil está incorreto.
+      return new Response(JSON.stringify({ error: 'Usuário criado/convidado, mas erro ao definir perfil: ' + profileUpdateError.message }), {
         status: 500,
         headers: corsHeaders,
       });
@@ -123,7 +160,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Erro geral na Edge Function:', error);
+    console.error('[create-user] Erro geral na Edge Function:', error);
     return new Response(JSON.stringify({ error: 'Erro interno do servidor.' }), {
       status: 500,
       headers: corsHeaders,

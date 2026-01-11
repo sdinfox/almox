@@ -1,3 +1,5 @@
+/// <reference path="./deno.d.ts" />
+
 export type UserProfile = {
   id: string;
   email: string;
