@@ -29,8 +29,8 @@ const navItems: NavItem[] = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'consulta', 'retirada'] },
   { href: '/materiais', label: 'Materiais', icon: Package, roles: ['admin', 'consulta', 'retirada'] },
   { href: '/movimentacoes', label: 'Movimentações', icon: ArrowLeftRight, roles: ['admin', 'consulta'] },
-  { href: '/solicitacoes', label: 'Solicitações', icon: ListChecks, roles: ['admin'] },
-  { href: '/minhas-retiradas', label: 'Minhas Retiradas', icon: ListChecks, roles: ['retirada'] },
+  { href: '/solicitacoes', label: 'Aprovação', icon: ListChecks, roles: ['admin'] },
+  { href: '/minhas-solicitacoes', label: 'Minhas Solicitações', icon: ListChecks, roles: ['retirada'] },
   { href: '/usuarios', label: 'Usuários', icon: Users, roles: ['admin'] },
   { href: '/configuracoes', label: 'Configurações', icon: Settings, roles: ['admin'] },
 ];

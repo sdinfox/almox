@@ -2,13 +2,19 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package, Users, ListChecks, AlertTriangle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { usePendingRequests, useMovementsHistory } from "@/hooks/useMovements";
+import { usePendingRequests, useMovementsHistory, useMyPendingRequests } from "@/hooks/useMovements";
 import { useMaterials } from "@/hooks/useMaterials";
 import MovementTable from "@/components/movements/MovementTable"; // Importando a tabela
 
 const Index = () => {
   const { profile, isLoading } = useAuth();
-  const { data: pendingRequests = [], isLoading: isLoadingRequests } = usePendingRequests();
+  
+  // Admin/Geral: Solicitações pendentes para aprovação
+  const { data: adminPendingRequests = [], isLoading: isLoadingAdminRequests } = usePendingRequests();
+  
+  // Retirada: Minhas solicitações pendentes
+  const { data: myPendingRequests = [], isLoading: isLoadingMyRequests } = useMyPendingRequests();
+
   const { data: materials = [], isLoading: isLoadingMaterials } = useMaterials();
   // Buscando as últimas 5 movimentações
   const { data: movements = [], isLoading: isLoadingMovements } = useMovementsHistory();
@@ -70,7 +76,7 @@ const Index = () => {
                   <ListChecks className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{isLoadingRequests ? '...' : pendingRequests.length}</div>
+                  <div className="text-2xl font-bold">{isLoadingAdminRequests ? '...' : adminPendingRequests.length}</div>
                   <p className="text-xs text-muted-foreground">
                     Aguardando aprovação
                   </p>
@@ -107,7 +113,7 @@ const Index = () => {
             <h2 className="text-2xl font-bold">Dashboard de Retirada</h2>
             <Card className="p-6">
               <h3 className="text-xl font-semibold mb-4">Acesso Rápido</h3>
-              <p>Você tem <span className="font-bold text-primary">{isLoadingRequests ? '...' : pendingRequests.length}</span> solicitações pendentes. Acesse "Minhas Retiradas" para gerenciar.</p>
+              <p>Você tem <span className="font-bold text-primary">{isLoadingMyRequests ? '...' : myPendingRequests.length}</span> solicitações pendentes. Acesse "Minhas Solicitações" para gerenciar.</p>
             </Card>
           </div>
         );

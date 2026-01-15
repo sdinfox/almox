@@ -44,9 +44,13 @@ export const useMovementsHistory = () => {
   });
 };
 
-// --- Fetch My Pending Withdrawals (User 'retirada') ---
-const fetchMyPendingWithdrawals = async (): Promise<MovementWithDetails[]> => {
+// --- Fetch My Pending Requests (User 'retirada') ---
+const fetchMyPendingRequests = async (): Promise<MovementWithDetails[]> => {
   // RLS policy 'movimentacoes_select_own_pending' handles filtering by user_id and status='pendente'
+  // Nota: A política RLS precisa ser ajustada para incluir 'entrada' pendente para o usuário 'retirada'
+  // No entanto, a política atual 'movimentacoes_select_own_pending' só filtra por user_id e status='pendente'.
+  // Se a política RLS for genérica o suficiente, ela funcionará para 'entrada' e 'saida'.
+  // Vamos buscar todas as pendências do usuário logado.
   const { data, error } = await supabase
     .from('movimentacoes')
     .select(`
@@ -56,7 +60,6 @@ const fetchMyPendingWithdrawals = async (): Promise<MovementWithDetails[]> => {
       approver:aprovado_por (nome, email)
     `)
     .eq('status', 'pendente')
-    .eq('tipo', 'saida')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -66,10 +69,10 @@ const fetchMyPendingWithdrawals = async (): Promise<MovementWithDetails[]> => {
   return data as MovementWithDetails[];
 };
 
-export const useMyPendingWithdrawals = () => {
+export const useMyPendingRequests = () => {
   return useQuery({
     queryKey: PENDING_REQUESTS_QUERY_KEY,
-    queryFn: fetchMyPendingWithdrawals,
+    queryFn: fetchMyPendingRequests,
   });
 };
 
@@ -131,13 +134,21 @@ const updateMovementStatus = async ({ movementId, status }: UpdateStatusPayload)
   const material_id = movement.material_id;
   const quantidade_anterior = (movement.material as any).quantidade_atual;
   const quantidade = movement.quantidade;
+  const tipo = movement.tipo;
   let quantidade_nova = quantidade_anterior;
 
   if (status === 'aprovada') {
-    // Calculate new stock for approval
-    quantidade_nova = quantidade_anterior - quantidade;
-    if (quantidade_nova < 0) {
-      throw new Error(`Estoque insuficiente para aprovar esta retirada. Disponível: ${quantidade_anterior}. Solicitado: ${quantidade}.`);
+    // Calculate new stock based on movement type
+    if (tipo === 'saida') {
+      quantidade_nova = quantidade_anterior - quantidade;
+      if (quantidade_nova < 0) {
+        throw new Error(`Estoque insuficiente para aprovar esta retirada. Disponível: ${quantidade_anterior}. Solicitado: ${quantidade}.`);
+      }
+    } else if (tipo === 'entrada') {
+      quantidade_nova = quantidade_anterior + quantidade;
+    } else {
+      // Ajustes e outros tipos diretos não devem passar por aprovação pendente, mas por segurança:
+      throw new Error(`Tipo de movimentação (${tipo}) não suportado para aprovação pendente.`);
     }
     
     // 2. Se aprovado, atualiza o estoque do material
@@ -189,14 +200,15 @@ export const useUpdateMovementStatus = () => {
 };
 
 
-// --- Request Withdrawal (User 'retirada') ---
-interface WithdrawalPayload {
+// --- Create User Request (User 'retirada') ---
+interface UserRequestPayload {
   material_id: string;
+  tipo: 'entrada' | 'saida'; // Restrito a estes tipos para solicitações pendentes
   quantidade: number;
   observacao?: string;
 }
 
-const requestWithdrawal = async (payload: WithdrawalPayload): Promise<Movimentacao> => {
+const createUserRequest = async (payload: UserRequestPayload): Promise<Movimentacao> => {
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   
   if (userError || !user) {
@@ -210,7 +222,7 @@ const requestWithdrawal = async (payload: WithdrawalPayload): Promise<Movimentac
     .insert({
       material_id: payload.material_id,
       user_id: user.id,
-      tipo: 'saida' as MovimentacaoTipo,
+      tipo: payload.tipo as MovimentacaoTipo,
       quantidade: payload.quantidade,
       quantidade_anterior: 0, 
       quantidade_nova: 0,     
@@ -226,18 +238,18 @@ const requestWithdrawal = async (payload: WithdrawalPayload): Promise<Movimentac
   return data as Movimentacao;
 };
 
-export const useRequestWithdrawal = () => {
+export const useCreateUserRequest = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: requestWithdrawal,
+    mutationFn: createUserRequest,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PENDING_REQUESTS_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: MOVEMENTS_QUERY_KEY });
-      showSuccess('Solicitação de retirada enviada para aprovação!');
+      showSuccess('Solicitação de movimentação enviada para aprovação!');
     },
     onError: (error) => {
-      showError('Erro ao solicitar retirada: ' + error.message);
+      showError('Erro ao enviar solicitação: ' + error.message);
     },
   });
 };

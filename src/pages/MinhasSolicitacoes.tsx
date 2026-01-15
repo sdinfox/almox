@@ -12,16 +12,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMaterials } from '@/hooks/useMaterials';
-import { useRequestWithdrawal, useMyPendingWithdrawals } from '@/hooks/useMovements';
-import WithdrawalForm from '@/components/movements/WithdrawalForm';
+import { useCreateUserRequest, useMyPendingRequests } from '@/hooks/useMovements';
+import UserMovementForm from '@/components/movements/UserMovementForm'; // Novo formulário
 import MovementTable from '@/components/movements/MovementTable';
-import { Separator } from '@/components/ui/separator';
 
-const MinhasRetiradas = () => {
+const MinhasSolicitacoes = () => {
   const { profile } = useAuth();
   const { data: materials = [], isLoading: isLoadingMaterials } = useMaterials();
-  const { data: pendingRequests = [], isLoading: isLoadingPending } = useMyPendingWithdrawals();
-  const requestWithdrawalMutation = useRequestWithdrawal();
+  // O hook useMyPendingWithdrawals foi renomeado para useMyPendingRequests
+  const { data: pendingRequests = [], isLoading: isLoadingPending } = useMyPendingRequests(); 
+  const createUserRequestMutation = useCreateUserRequest();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   if (profile?.perfil !== 'retirada') {
@@ -37,7 +37,7 @@ const MinhasRetiradas = () => {
   }
 
   const handleSubmit = (values: any) => {
-    requestWithdrawalMutation.mutate(values, {
+    createUserRequestMutation.mutate(values, {
       onSuccess: () => {
         setIsDialogOpen(false);
       },
@@ -47,7 +47,7 @@ const MinhasRetiradas = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Minhas Solicitações de Retirada</h1>
+        <h1 className="text-3xl font-bold">Minhas Solicitações de Movimentação</h1>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -57,20 +57,20 @@ const MinhasRetiradas = () => {
           </DialogTrigger>
           <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
-              <DialogTitle>Solicitar Retirada de Material</DialogTitle>
+              <DialogTitle>Solicitar Movimentação de Material</DialogTitle>
             </DialogHeader>
             {isLoadingMaterials ? (
               <div className="text-center p-4">Carregando materiais...</div>
             ) : materials.length === 0 ? (
               <Alert variant="default">
                 <AlertTitle>Nenhum Material</AlertTitle>
-                <AlertDescription>Nenhum material disponível para retirada.</AlertDescription>
+                <AlertDescription>Nenhum material disponível para movimentação.</AlertDescription>
               </Alert>
             ) : (
-              <WithdrawalForm
+              <UserMovementForm
                 materials={materials}
                 onSubmit={handleSubmit}
-                isPending={requestWithdrawalMutation.isPending}
+                isPending={createUserRequestMutation.isPending}
               />
             )}
           </DialogContent>
@@ -86,7 +86,7 @@ const MinhasRetiradas = () => {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
-            Acompanhe o status das suas solicitações que aguardam aprovação.
+            Acompanhe o status das suas solicitações de entrada e retirada que aguardam aprovação.
           </p>
           <MovementTable 
             movements={pendingRequests} 
@@ -98,4 +98,4 @@ const MinhasRetiradas = () => {
   );
 };
 
-export default MinhasRetiradas;
+export default MinhasSolicitacoes;

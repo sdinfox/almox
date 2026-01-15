@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import MovementTable from '@/components/movements/MovementTable';
 import { useMaterials } from '@/hooks/useMaterials';
-import { useProcessMovement, useMovementsHistory, useRequestWithdrawal } from '@/hooks/useMovements';
+import { useProcessMovement, useMovementsHistory, useCreateUserRequest } from '@/hooks/useMovements';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
 import { ShieldAlert } from 'lucide-react';
@@ -23,7 +23,7 @@ const Movimentacoes = () => {
   
   // Mutations
   const processMovementMutation = useProcessMovement(); // Para Entrada/Ajuste (direto)
-  const requestWithdrawalMutation = useRequestWithdrawal(); // Para Solicitação de Saída (pendente)
+  const requestWithdrawalMutation = useCreateUserRequest(); // Para Solicitação de Saída (pendente)
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -51,21 +51,6 @@ const Movimentacoes = () => {
       });
     } else {
       // Processa movimentação direta (entrada ou ajuste)
-      // Nota: O tipo 'saida' no AdminMovementForm foi substituído por 'solicitacao_saida'
-      // Movimentações diretas de saída/ajuste negativo são tratadas como 'ajuste' ou 'saida' na Edge Function, mas o formulário só oferece 'entrada' e 'ajuste' para ações diretas.
-      // Se o Admin precisar de uma saída direta, ele deve usar 'ajuste' com a quantidade negativa, mas o formulário só permite positivo.
-      // Vamos garantir que o tipo 'saida' seja enviado para a Edge Function se for uma saída direta.
-      
-      // Para simplificar, vamos mapear 'ajuste' para a Edge Function, que pode ser positivo ou negativo.
-      // No entanto, o AdminMovementForm só oferece 'entrada' e 'ajuste' para ações diretas.
-      // Se o Admin quiser uma saída direta, ele deve usar 'ajuste' e a Edge Function deve lidar com isso.
-      
-      // O AdminMovementForm só oferece 'entrada' e 'ajuste' para ações diretas.
-      // Se o Admin quiser uma saída direta, ele deve usar 'ajuste' e a Edge Function deve lidar com isso.
-      
-      // Revertendo a lógica para usar 'entrada' e 'ajuste' como tipos diretos, e 'saida' como tipo direto se for necessário.
-      // O AdminMovementForm agora só oferece 'entrada', 'ajuste' e 'solicitacao_saida'.
-      
       // Se for 'ajuste' ou 'entrada', usamos processMovementMutation.
       processMovementMutation.mutate({ ...payload, tipo: tipo === 'ajuste' ? 'ajuste' : 'entrada' }, {
         onSuccess: () => {

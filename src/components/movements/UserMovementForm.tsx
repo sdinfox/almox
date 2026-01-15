@@ -2,7 +2,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Material } from '@/types';
+import { Material, MovimentacaoTipo } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -24,37 +24,65 @@ import {
 import { Loader2 } from 'lucide-react';
 
 // Esquema de validação
-const withdrawalSchema = z.object({
+const userMovementSchema = z.object({
   material_id: z.string().min(1, 'O material é obrigatório.'),
+  tipo: z.enum(['entrada', 'saida'], {
+    required_error: 'O tipo de solicitação é obrigatório.',
+  }),
   quantidade: z.coerce.number().min(1, 'A quantidade deve ser maior que zero.'),
   observacao: z.string().optional(),
 });
 
-type WithdrawalFormValues = z.infer<typeof withdrawalSchema>;
+type UserMovementFormValues = z.infer<typeof userMovementSchema>;
 
-interface WithdrawalFormProps {
+interface UserMovementFormProps {
   materials: Material[];
-  onSubmit: (data: WithdrawalFormValues) => void;
+  onSubmit: (data: UserMovementFormValues) => void;
   isPending: boolean;
 }
 
-const WithdrawalForm: React.FC<WithdrawalFormProps> = ({ materials, onSubmit, isPending }) => {
-  const form = useForm<WithdrawalFormValues>({
-    resolver: zodResolver(withdrawalSchema),
+const UserMovementForm: React.FC<UserMovementFormProps> = ({ materials, onSubmit, isPending }) => {
+  const form = useForm<UserMovementFormValues>({
+    resolver: zodResolver(userMovementSchema),
     defaultValues: {
       material_id: '',
+      tipo: 'saida', // Default para retirada
       quantidade: 1,
       observacao: '',
     },
   });
 
-  const handleSubmit = (values: WithdrawalFormValues) => {
+  const handleSubmit = (values: UserMovementFormValues) => {
     onSubmit(values);
   };
+
+  const selectedType = form.watch('tipo');
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="tipo"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Tipo de Solicitação</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o Tipo" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="saida">Retirada (Saída de Estoque)</SelectItem>
+                  <SelectItem value="entrada">Devolução/Entrada (Adicionar ao Estoque)</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <FormField
           control={form.control}
           name="material_id"
@@ -99,9 +127,9 @@ const WithdrawalForm: React.FC<WithdrawalFormProps> = ({ materials, onSubmit, is
           name="observacao"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Finalidade da Retirada (Opcional)</FormLabel>
+              <FormLabel>{selectedType === 'saida' ? 'Finalidade da Retirada' : 'Motivo da Entrada/Devolução'} (Opcional)</FormLabel>
               <FormControl>
-                <Textarea placeholder="Projeto, setor ou motivo da retirada..." {...field} />
+                <Textarea placeholder="Detalhes da solicitação..." {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -115,7 +143,7 @@ const WithdrawalForm: React.FC<WithdrawalFormProps> = ({ materials, onSubmit, is
               Enviando Solicitação...
             </>
           ) : (
-            'Solicitar Retirada'
+            'Enviar Solicitação'
           )}
         </Button>
       </form>
@@ -123,4 +151,4 @@ const WithdrawalForm: React.FC<WithdrawalFormProps> = ({ materials, onSubmit, is
   );
 };
 
-export default WithdrawalForm;
+export default UserMovementForm;
