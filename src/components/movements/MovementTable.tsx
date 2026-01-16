@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ArrowDown, ArrowUp, RefreshCw, Package } from 'lucide-react';
+import { ArrowDown, ArrowUp, RefreshCw, Package, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface MovementTableProps {
@@ -73,6 +73,7 @@ const MovementTable: React.FC<MovementTableProps> = ({ movements, isLoading }) =
             const statusInfo = statusMap[movement.status];
             const userName = movement.user?.nome || movement.user?.email || 'Usuário Desconhecido';
             const formattedDate = format(new Date(movement.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR });
+            const isSigned = movement.tipo === 'saida' && movement.assinatura_retirada;
 
             return (
               <TableRow key={movement.id}>
@@ -99,9 +100,16 @@ const MovementTable: React.FC<MovementTableProps> = ({ movements, isLoading }) =
                   )}
                 </TableCell>
                 <TableCell>
-                  <Badge variant={statusInfo.variant} className="capitalize">
-                    {statusInfo.label}
-                  </Badge>
+                  <div className="flex items-center space-x-2">
+                    <Badge variant={statusInfo.variant} className="capitalize">
+                      {statusInfo.label}
+                    </Badge>
+                    {isSigned && (
+                      <Badge variant="default" className="bg-green-500 hover:bg-green-500/90">
+                        <CheckCircle className="h-3 w-3 mr-1" /> Assinado
+                      </Badge>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">
                   {movement.observacao || 'N/A'}
@@ -111,6 +119,9 @@ const MovementTable: React.FC<MovementTableProps> = ({ movements, isLoading }) =
           })}
         </TableBody>
       </Table>
+
+      {/* Modal de Confirmação de Exclusão (mantido se houver necessidade futura, mas não relevante aqui) */}
+      {/* ... */}
     </div>
   );
 };
