@@ -1,10 +1,12 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, Users, ListChecks, AlertTriangle } from "lucide-react";
+import { Package, Users, ListChecks, AlertTriangle, TrendingUp, BarChart3 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { usePendingRequests, useMovementsHistory, useMyPendingRequests } from "@/hooks/useMovements";
 import { useMaterials } from "@/hooks/useMaterials";
-import MovementTable from "@/components/movements/MovementTable"; // Importando a tabela
+import { useCriticalMaterials, useMovementTrend } from "@/hooks/useDashboardData";
+import MovementTable from "@/components/movements/MovementTable";
+import DashboardChartCard from "@/components/dashboard/DashboardChartCard";
 
 const Index = () => {
   const { profile, isLoading } = useAuth();
@@ -20,6 +22,10 @@ const Index = () => {
   const { data: movements = [], isLoading: isLoadingMovements } = useMovementsHistory();
   const recentMovements = movements.slice(0, 5);
 
+  // Novos Hooks para Dashboard Admin
+  const { data: criticalMaterialsData = [], isLoading: isLoadingCritical } = useCriticalMaterials();
+  const { data: movementTrendData = [], isLoading: isLoadingTrend } = useMovementTrend();
+
   if (isLoading) {
     // O ProtectedRoute já lida com o estado de carregamento, mas mantemos um fallback
     return <div>Carregando dados do usuário...</div>;
@@ -30,7 +36,7 @@ const Index = () => {
   }
 
   // Calculate critical materials count
-  const criticalMaterials = materials.filter(m => m.quantidade_atual <= m.quantidade_minima).length;
+  const criticalMaterialsCount = materials.filter(m => m.quantidade_atual <= m.quantidade_minima).length;
 
   // Conteúdo do Dashboard (será expandido nos próximos passos)
   const DashboardContent = () => {
@@ -62,7 +68,7 @@ const Index = () => {
                   <AlertTriangle className="h-4 w-4 text-destructive" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{isLoadingMaterials ? '...' : criticalMaterials}</div>
+                  <div className="text-2xl font-bold">{isLoadingMaterials ? '...' : criticalMaterialsCount}</div>
                   <p className="text-xs text-muted-foreground">
                     Abaixo do estoque mínimo
                   </p>
@@ -97,6 +103,38 @@ const Index = () => {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Gráficos */}
+            <div className="grid gap-6 lg:grid-cols-2">
+              <DashboardChartCard
+                title="Tendência de Movimentação (Últimos 30 Dias)"
+                icon={<TrendingUp className="h-5 w-5 mr-2 text-primary" />}
+                data={movementTrendData}
+                dataKeys={[
+                  { key: 'entradas', color: 'hsl(142.1 76.2% 36.3%)', type: 'line' }, // Verde
+                  { key: 'saidas', color: 'hsl(0 84.2% 60.2%)', type: 'line' }, // Vermelho
+                ]}
+                isLoading={isLoadingTrend}
+                description="Volume de entradas e saídas aprovadas por dia."
+              />
+
+              <DashboardChartCard
+                title="Top 5 Materiais Mais Críticos"
+                icon={<AlertTriangle className="h-5 w-5 mr-2 text-destructive" />}
+                data={criticalMaterialsData.map(m => ({
+                    name: m.codigo,
+                    'Estoque Atual': m.quantidade_atual,
+                    'Estoque Mínimo': m.quantidade_minima,
+                }))}
+                dataKeys={[
+                  { key: 'Estoque Mínimo', color: 'hsl(210 40% 96.1%)', type: 'bar' }, // Cinza
+                  { key: 'Estoque Atual', color: 'hsl(0 84.2% 60.2%)', type: 'bar' }, // Vermelho
+                ]}
+                isLoading={isLoadingCritical}
+                description="Materiais com maior déficit em relação ao estoque mínimo."
+              />
+            </div>
+
             <Separator />
             <h3 className="text-xl font-semibold">Últimas 5 Movimentações</h3>
             <Card className="p-4">
