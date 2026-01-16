@@ -9,10 +9,11 @@ import Login from "./pages/Login";
 import Materiais from "./pages/Materiais";
 import Movimentacoes from "./pages/Movimentacoes";
 import Solicitacoes from "./pages/Solicitacoes";
-import MinhasSolicitacoes from "./pages/MinhasSolicitacoes"; // Importação atualizada
+import MinhasSolicitacoes from "./pages/MinhasSolicitacoes";
 import Usuarios from "./pages/Usuarios";
 import Configuracoes from "./pages/Configuracoes";
 import Profile from "./pages/Profile";
+import Relatorios from "./pages/Relatorios"; // Importando a página de Relatórios
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -34,10 +35,11 @@ const App = () => (
               <Route path="/materiais" element={<Materiais />} />
               <Route path="/movimentacoes" element={<Movimentacoes />} />
               <Route path="/solicitacoes" element={<Solicitacoes />} />
-              <Route path="/minhas-solicitacoes" element={<MinhasSolicitacoes />} /> {/* Rota atualizada */}
+              <Route path="/minhas-solicitacoes" element={<MinhasSolicitacoes />} />
               <Route path="/usuarios" element={<Usuarios />} />
               <Route path="/configuracoes" element={<Configuracoes />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/relatorios" element={<Relatorios />} /> {/* Rota de Relatórios */}
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             </Route>
 
