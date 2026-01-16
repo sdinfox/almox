@@ -47,10 +47,14 @@ export const useMovementsHistory = () => {
 // --- Fetch My Pending Requests (User 'retirada') ---
 const fetchMyPendingRequests = async (): Promise<MovementWithDetails[]> => {
   // RLS policy 'movimentacoes_select_own_pending' handles filtering by user_id and status='pendente'
-  // Nota: A política RLS precisa ser ajustada para incluir 'entrada' pendente para o usuário 'retirada'
-  // No entanto, a política atual 'movimentacoes_select_own_pending' só filtra por user_id e status='pendente'.
-  // Se a política RLS for genérica o suficiente, ela funcionará para 'entrada' e 'saida'.
-  // Vamos buscar todas as pendências do usuário logado.
+  // Buscamos todas as movimentações do usuário logado que ainda não foram concluídas (aprovadas com assinatura ou rejeitadas)
+  // Para o perfil 'retirada', a política RLS deve garantir que ele veja suas pendentes, aprovadas (sem assinatura) e rejeitadas.
+  
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) {
+    throw new Error('Usuário não autenticado.');
+  }
+
   const { data, error } = await supabase
     .from('movimentacoes')
     .select(`
@@ -59,11 +63,11 @@ const fetchMyPendingRequests = async (): Promise<MovementWithDetails[]> => {
       user:user_id (nome, email),
       approver:aprovado_por (nome, email)
     `)
-    .eq('status', 'pendente')
+    .eq('user_id', user.id) // Filtra apenas as do usuário logado
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error("Erro ao buscar minhas solicitações pendentes:", error.message);
+    console.error("Erro ao buscar minhas solicitações:", error.message);
     throw new Error(error.message);
   }
   return data as MovementWithDetails[];
@@ -152,6 +156,7 @@ const updateMovementStatus = async ({ movementId, status }: UpdateStatusPayload)
     }
     
     // 2. Se aprovado, atualiza o estoque do material
+    // NOTA: Para retiradas (saida), o estoque só é atualizado aqui na aprovação.
     const { error: materialUpdateError } = await supabase
       .from('materiais')
       .update({ quantidade_atual: quantidade_nova, updated_at: new Date().toISOString() })
@@ -298,6 +303,52 @@ export const useProcessMovement = () => {
     },
     onError: (error) => {
       showError('Erro ao registrar movimentação: ' + error.message);
+    },
+  });
+};
+
+// --- Add Signature to Approved Movement (User 'retirada') ---
+interface AddSignaturePayload {
+  movementId: string;
+  signature: string; // Data URL da assinatura
+}
+
+const addSignatureToMovement = async ({ movementId, signature }: AddSignaturePayload): Promise<Movimentacao> => {
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  
+  if (userError || !user) {
+    throw new Error('Usuário não autenticado.');
+  }
+
+  // O RLS garante que apenas o solicitante possa atualizar o campo 'assinatura_retirada'
+  const { data, error } = await supabase
+    .from('movimentacoes')
+    .update({ 
+      assinatura_retirada: signature,
+      updated_at: new Date().toISOString() 
+    })
+    .eq('id', movementId)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error('Erro ao registrar assinatura: ' + error.message);
+  }
+  return data as Movimentacao;
+};
+
+export const useAddSignatureToMovement = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: addSignatureToMovement,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: PENDING_REQUESTS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: MOVEMENTS_QUERY_KEY });
+      showSuccess('Retirada confirmada com sucesso! Assinatura registrada.');
+    },
+    onError: (error) => {
+      showError('Falha ao registrar assinatura: ' + error.message);
     },
   });
 };
