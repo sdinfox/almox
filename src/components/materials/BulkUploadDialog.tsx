@@ -8,9 +8,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Upload, Loader2, FileText } from 'lucide-react';
+import { Upload, Loader2, FileText, AlertTriangle } from 'lucide-react';
 import { useBulkUpdateStock } from '@/hooks/useMaterials';
-import { showError } from '@/utils/toast';
+import { showError, showSuccess } from '@/utils/toast';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 interface BulkUploadDialogProps {
   isOpen: boolean;
@@ -31,37 +32,85 @@ interface BulkItem {
 
 const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({ isOpen, onOpenChange }) => {
   const [file, setFile] = useState<File | null>(null);
+  const [parsingError, setParsingError] = useState<string | null>(null);
   const bulkMutation = useBulkUpdateStock();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
+    setParsingError(null);
     if (selectedFile) {
-      // Em um ambiente real, você verificaria o tipo (CSV/XLSX)
+      const validTypes = [
+        'text/csv', 
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+        'application/vnd.ms-excel' // .xls
+      ];
+      if (!validTypes.includes(selectedFile.type) && !selectedFile.name.endsWith('.csv')) {
+        showError('Formato de arquivo inválido. Use CSV ou Excel (.xlsx).');
+        setFile(null);
+        return;
+      }
       setFile(selectedFile);
+    } else {
+      setFile(null);
     }
   };
 
-  const handleUpload = async () => {
-    if (!file) {
-      showError('Por favor, selecione um arquivo para upload.');
-      return;
-    }
-
-    // Simulação da leitura e conversão do arquivo (CSV/XLSX -> JSON Array)
-    // Na implementação real, você usaria uma biblioteca como PapaParse (para CSV) ou SheetJS (para XLSX)
+  // Função placeholder para simular a leitura e conversão do arquivo
+  const parseFile = async (file: File): Promise<BulkItem[]> => {
+    // -------------------------------------------------------------------
+    // ATENÇÃO: ESTE É UM PLACEHOLDER. 
+    // Em um ambiente real, você usaria uma biblioteca como 'xlsx' (SheetJS) 
+    // ou 'papaparse' (para CSV) para ler o arquivo e converter para JSON.
+    // -------------------------------------------------------------------
     
-    // Exemplo de dados simulados que seriam gerados após a leitura do arquivo:
+    console.log(`Simulando leitura do arquivo: ${file.name}`);
+
+    // Simulação de dados que seriam gerados após a leitura do arquivo:
     const simulatedData: BulkItem[] = [
-      { codigo: 'P-1001', nome: 'Parafuso M8', unidade_medida: 'UN', quantidade: 50, quantidade_minima: 10 }, // Item existente (atualiza estoque)
-      { codigo: 'C-2005', nome: 'Cabo de Força', unidade_medida: 'MT', quantidade: 100, categoria: 'Elétrica' }, // Item novo (cria)
+      { codigo: 'P-1001', nome: 'Parafuso M8', unidade_medida: 'UN', quantidade: 50, quantidade_minima: 10 }, 
+      { codigo: 'C-2005', nome: 'Cabo de Força', unidade_medida: 'MT', quantidade: 100, categoria: 'Elétrica' }, 
+      { codigo: 'F-3000', nome: 'Fita Isolante', unidade_medida: 'UN', quantidade: 20, localizacao: 'B2' },
     ];
 
+    // Simulação de validação básica
+    if (simulatedData.some(item => !item.codigo || !item.nome || !item.unidade_medida || item.quantidade <= 0)) {
+        throw new Error("Dados inválidos encontrados na planilha simulada.");
+    }
+
+    return simulatedData;
+  };
+
+  const handleUpload = async () => {
+    if (!file) return;
+
     try {
-      await bulkMutation.mutateAsync(simulatedData);
+      // 1. Parse do arquivo (simulado)
+      const itemsToUpload = await parseFile(file);
+      
+      if (itemsToUpload.length === 0) {
+        showError('O arquivo não contém dados válidos para upload.');
+        return;
+      }
+
+      // 2. Execução da mutação
+      const result = await bulkMutation.mutateAsync(itemsToUpload);
+      
+      // 3. Feedback detalhado
+      let summary = `Carga concluída: ${result.createdCount} novos materiais, ${result.updatedCount} estoques atualizados.`;
+      
+      if (result.errors.length > 0) {
+        summary += ` ${result.errors.length} falhas.`;
+        showError(summary);
+        // Em um cenário real, você mostraria os detalhes dos erros em um modal separado
+      } else {
+        showSuccess(summary);
+      }
+
       onOpenChange(false);
       setFile(null);
     } catch (e) {
-      // O erro já é tratado no hook, mas mantemos o bloco
+      setParsingError(e instanceof Error ? e.message : 'Erro desconhecido durante o processamento do arquivo.');
+      // A mutação já trata erros de backend via toast
     }
   };
 
@@ -71,9 +120,9 @@ const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({ isOpen, onOpenChang
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Carga de Estoque em Massa</Dialogeração</DialogTitle>
+          <DialogTitle>Carga de Estoque em Massa</DialogTitle>
           <DialogDescription>
-            Faça o upload de um arquivo (CSV/Excel) para cadastrar novos materiais ou atualizar o estoque de itens existentes.
+            Faça o upload de um arquivo CSV ou Excel para cadastrar novos materiais ou atualizar o estoque de itens existentes.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -81,15 +130,31 @@ const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({ isOpen, onOpenChang
             <FileText className="h-4 w-4" />
             <AlertTitle>Formato Esperado</AlertTitle>
             <AlertDescription>
-              O arquivo deve conter colunas para: Código, Nome, Unidade de Medida, Quantidade, e opcionalmente: Descrição, Categoria, Estoque Mínimo, Localização.
+              O arquivo deve conter colunas para: 
+              <span className="font-semibold"> Código, Nome, Unidade de Medida, Quantidade</span>, 
+              e opcionalmente: Descrição, Categoria, Estoque Mínimo, Localização.
             </AlertDescription>
           </Alert>
+          
+          {parsingError && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Erro de Processamento</AlertTitle>
+              <AlertDescription>{parsingError}</AlertDescription>
+            </Alert>
+          )}
+
           <Input 
             type="file" 
             accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
             onChange={handleFileChange}
             disabled={isPending}
           />
+          
+          {file && (
+            <p className="text-sm text-muted-foreground">Arquivo selecionado: {file.name}</p>
+          )}
+
           <Button 
             onClick={handleUpload} 
             disabled={!file || isPending}

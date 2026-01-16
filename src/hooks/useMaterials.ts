@@ -4,6 +4,8 @@ import { Material } from '@/types';
 import { showError, showSuccess } from '@/utils/toast';
 
 const MATERIALS_QUERY_KEY = ['materials'];
+const MOVEMENTS_QUERY_KEY = ['movements'];
+const BULK_UPDATE_FUNCTION_URL = 'https://xleljhiyuhtvzjlxzawy.supabase.co/functions/v1/bulk-stock-update';
 
 // --- Fetch ---
 const fetchMaterials = async (): Promise<Material[]> => {
@@ -109,6 +111,72 @@ export const useDeleteMaterial = () => {
     },
     onError: (error) => {
       showError('Erro ao excluir material: ' + error.message);
+    },
+  });
+};
+
+// --- Bulk Update ---
+interface BulkItem {
+  codigo: string;
+  nome: string;
+  unidade_medida: string;
+  quantidade: number;
+  descricao?: string;
+  categoria?: string;
+  quantidade_minima?: number;
+  localizacao?: string;
+}
+
+interface BulkUpdateResponse {
+  createdCount: number;
+  updatedCount: number;
+  errors: { item: BulkItem, message: string }[];
+}
+
+const bulkUpdateStock = async (items: BulkItem[]): Promise<BulkUpdateResponse> => {
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  if (!session) {
+    throw new Error('Usuário não autenticado.');
+  }
+
+  const response = await fetch(BULK_UPDATE_FUNCTION_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ items }),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.error || 'Erro desconhecido ao processar a carga em massa.');
+  }
+
+  return result as BulkUpdateResponse;
+};
+
+export const useBulkUpdateStock = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: bulkUpdateStock,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: MATERIALS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: MOVEMENTS_QUERY_KEY });
+      
+      let message = `Carga em massa concluída: ${data.createdCount} novos materiais, ${data.updatedCount} estoques atualizados.`;
+      if (data.errors.length > 0) {
+        message += ` ${data.errors.length} itens com erro.`;
+        showError(message);
+      } else {
+        showSuccess(message);
+      }
+    },
+    onError: (error) => {
+      showError('Falha na carga em massa: ' + error.message);
     },
   });
 };
