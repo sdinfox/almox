@@ -53,9 +53,10 @@ export const useCriticalMaterials = () => {
 
 // --- Fetch Movement Trend (Last 30 Days) ---
 interface MovementTrendData {
-  name: string; // Corrigido de 'date' para 'name'
+  name: string;
   entradas: number;
   saidas: number;
+  [key: string]: string | number; // Adicionado para compatibilidade com ChartData
 }
 
 const fetchMovementTrend = async (): Promise<MovementTrendData[]> => {
@@ -117,5 +118,122 @@ export const useMovementTrend = () => {
     queryKey: [...DASHBOARD_QUERY_KEY, 'trend'],
     queryFn: fetchMovementTrend,
     staleTime: 1000 * 60 * 10, // 10 minutes
+  });
+};
+
+// --- Fetch Zero Stock Count ---
+const fetchZeroStockCount = async (): Promise<number> => {
+  const { count, error } = await supabase
+    .from('materiais')
+    .select('id', { count: 'exact' })
+    .eq('quantidade_atual', 0);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  return count ?? 0;
+};
+
+export const useZeroStockCount = () => {
+  return useQuery({
+    queryKey: [...DASHBOARD_QUERY_KEY, 'zeroStock'],
+    queryFn: fetchZeroStockCount,
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
+// --- Fetch Total Movements Last 30 Days ---
+const fetchTotalMovementsLast30Days = async (): Promise<number> => {
+  const thirtyDaysAgo = format(subDays(new Date(), 30), 'yyyy-MM-dd');
+
+  const { count, error } = await supabase
+    .from('movimentacoes')
+    .select('id', { count: 'exact' })
+    .eq('status', 'aprovada')
+    .gte('created_at', thirtyDaysAgo);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  return count ?? 0;
+};
+
+export const useTotalMovementsLast30Days = () => {
+  return useQuery({
+    queryKey: [...DASHBOARD_QUERY_KEY, 'totalMovements'],
+    queryFn: fetchTotalMovementsLast30Days,
+    staleTime: 1000 * 60 * 10,
+  });
+};
+
+// --- Fetch Top 5 Moving Items (Last 30 Days) ---
+interface TopMovingItem {
+  material_id: string;
+  nome: string;
+  codigo: string;
+  total_quantidade: number;
+  unidade_medida: string;
+}
+
+const fetchTopMovingItems = async (): Promise<TopMovingItem[]> => {
+  const thirtyDaysAgo = format(subDays(new Date(), 30), 'yyyy-MM-dd');
+
+  // 1. Buscar movimentações aprovadas nos últimos 30 dias
+  const { data: movements, error: movementsError } = await supabase
+    .from('movimentacoes')
+    .select('material_id, quantidade')
+    .eq('status', 'aprovada')
+    .gte('created_at', thirtyDaysAgo);
+
+  if (movementsError) {
+    throw new Error(movementsError.message);
+  }
+
+  // 2. Agrupar e somar a quantidade por material_id
+  const aggregatedData = movements.reduce((acc, movement) => {
+    acc[movement.material_id] = (acc[movement.material_id] || 0) + movement.quantidade;
+    return acc;
+  }, {} as Record<string, number>);
+
+  // 3. Converter para array e ordenar
+  const topMaterialIds = Object.entries(aggregatedData)
+    .sort(([, countA], [, countB]) => countB - countA)
+    .slice(0, 5)
+    .map(([id]) => id);
+
+  if (topMaterialIds.length === 0) {
+    return [];
+  }
+
+  // 4. Buscar detalhes dos materiais
+  const { data: materials, error: materialsError } = await supabase
+    .from('materiais')
+    .select('id, nome, codigo, unidade_medida')
+    .in('id', topMaterialIds);
+
+  if (materialsError) {
+    throw new Error(materialsError.message);
+  }
+
+  // 5. Combinar e formatar o resultado
+  const topMovingItems: TopMovingItem[] = materials.map(material => ({
+    material_id: material.id,
+    nome: material.nome,
+    codigo: material.codigo,
+    unidade_medida: material.unidade_medida,
+    total_quantidade: aggregatedData[material.id],
+  }));
+
+  // Garantir que a ordem seja pela quantidade total (do maior para o menor)
+  topMovingItems.sort((a, b) => b.total_quantidade - a.total_quantidade);
+
+  return topMovingItems;
+};
+
+export const useTopMovingItems = () => {
+  return useQuery({
+    queryKey: [...DASHBOARD_QUERY_KEY, 'topMoving'],
+    queryFn: fetchTopMovingItems,
+    staleTime: 1000 * 60 * 10,
   });
 };
