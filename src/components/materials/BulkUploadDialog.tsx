@@ -8,10 +8,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Upload, Loader2, FileText, AlertTriangle } from 'lucide-react';
+import { Upload, Loader2, FileText, AlertTriangle, Download } from 'lucide-react';
 import { useBulkUpdateStock } from '@/hooks/useMaterials';
 import { showError, showSuccess } from '@/utils/toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { format } from 'date-fns';
 
 interface BulkUploadDialogProps {
   isOpen: boolean;
@@ -53,6 +54,46 @@ const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({ isOpen, onOpenChang
     } else {
       setFile(null);
     }
+  };
+
+  // Função para gerar e baixar o arquivo modelo CSV
+  const handleDownloadTemplate = () => {
+    const headers = [
+      'codigo (OBRIGATÓRIO)', 
+      'nome (OBRIGATÓRIO)', 
+      'unidade_medida (OBRIGATÓRIO)', 
+      'quantidade (OBRIGATÓRIO)', 
+      'descricao', 
+      'categoria', 
+      'quantidade_minima', 
+      'localizacao'
+    ];
+    
+    // Exemplo de linha para guiar o usuário
+    const exampleRow = [
+      'P-1001', 
+      'Parafuso M8', 
+      'UN', 
+      '50', 
+      'Parafuso sextavado de aço', 
+      'Fixadores', 
+      '10', 
+      'Prateleira A1'
+    ];
+
+    const csvContent = [
+      headers.join(';'),
+      exampleRow.join(';')
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `modelo_carga_massa_materiais_${format(new Date(), 'yyyyMMdd')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // Função placeholder para simular a leitura e conversão do arquivo
@@ -136,6 +177,16 @@ const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({ isOpen, onOpenChang
             </AlertDescription>
           </Alert>
           
+          <Button 
+            onClick={handleDownloadTemplate} 
+            variant="outline" 
+            className="w-full"
+            disabled={isPending}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Baixar Arquivo Modelo CSV
+          </Button>
+
           {parsingError && (
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
