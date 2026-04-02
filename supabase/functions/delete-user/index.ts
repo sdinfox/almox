@@ -78,19 +78,19 @@ serve(async (req) => {
         });
     }
 
-    // 3. Criar Cliente com Service Role Key
-    const serviceRoleClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    // 4. Implementar Soft Delete - Marcar usuário como excluído em vez de deletar
+    // Isso preserva todas as movimentações e dados históricos
+    const { error: softDeleteError } = await userClient
+      .from('profiles')
+      .update({ 
+        deleted_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId);
 
-    // 4. Excluir o Usuário no Auth
-    // A exclusão no auth.users acionará o CASCADE DELETE no public.profiles
-    const { error: authError } = await serviceRoleClient.auth.admin.deleteUser(userId);
-
-    if (authError) {
-      console.error('Erro ao excluir usuário no Auth:', authError.message);
-      return new Response(JSON.stringify({ error: 'Erro ao excluir usuário: ' + authError.message }), {
+    if (softDeleteError) {
+      console.error('Erro ao marcar usuário como excluído:', softDeleteError.message);
+      return new Response(JSON.stringify({ error: 'Erro ao excluir usuário: ' + softDeleteError.message }), {
         status: 500,
         headers: corsHeaders,
       });

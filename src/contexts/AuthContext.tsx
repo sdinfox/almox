@@ -54,7 +54,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         showError("Erro ao carregar perfil: " + error.message);
         setProfile(null);
       } else {
-        setProfile(data as UserProfile);
+        // Verificar se usuário foi excluído (soft delete)
+        const userProfile = data as UserProfile;
+        if (userProfile.deleted_at) {
+          // Usuário excluído, fazer logout
+          await supabase.auth.signOut();
+          showError("Sua conta foi desativada. Entre em contato com o administrador.");
+          setProfile(null);
+          setUser(null);
+          setSession(null);
+        } else {
+          setProfile(userProfile);
+        }
       }
       setIsLoading(false);
     };

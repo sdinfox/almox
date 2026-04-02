@@ -92,7 +92,7 @@ const PendingRequestsTable: React.FC<PendingRequestsTableProps> = ({ requests, i
                   )}
                 </TableCell>
                 <TableCell>
-                  <div className="text-sm">{request.user?.nome || request.user?.email}</div>
+                  <div className="text-sm">{request.user?.display_name || request.user?.nome || request.user?.email}</div>
                 </TableCell>
                 <TableCell className="text-right font-semibold">
                   {request.quantidade} {request.material.unidade_medida}

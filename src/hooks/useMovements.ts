@@ -24,8 +24,8 @@ const fetchMovementsHistory = async (): Promise<MovementWithDetails[]> => {
     .select(`
       *,
       material:material_id (nome, codigo, unidade_medida, quantidade_atual),
-      user:user_id (nome, email),
-      approver:aprovado_por (nome, email)
+      user:user_id (nome, email, deleted_at),
+      approver:aprovado_por (nome, email, deleted_at)
     `)
     .order('created_at', { ascending: false });
 
@@ -34,7 +34,25 @@ const fetchMovementsHistory = async (): Promise<MovementWithDetails[]> => {
     console.error("Erro ao buscar histórico de movimentações:", error.message);
     throw new Error(error.message);
   }
-  return data as MovementWithDetails[];
+  
+  // Processar dados para adicionar indicador de usuário excluído
+  const processedData = data.map(movement => ({
+    ...movement,
+    user: movement.user ? {
+      ...movement.user,
+      display_name: movement.user.deleted_at 
+        ? `${movement.user.nome || movement.user.email} (excluído)`
+        : movement.user.nome || movement.user.email
+    } : null,
+    approver: movement.approver ? {
+      ...movement.approver,
+      display_name: movement.approver.deleted_at 
+        ? `${movement.approver.nome || movement.approver.email} (excluído)`
+        : movement.approver.nome || movement.approver.email
+    } : null
+  }));
+  
+  return processedData as MovementWithDetails[];
 };
 
 export const useMovementsHistory = () => {
@@ -60,8 +78,8 @@ const fetchMyPendingRequests = async (): Promise<MovementWithDetails[]> => {
     .select(`
       *,
       material:material_id (nome, codigo, unidade_medida, quantidade_atual),
-      user:user_id (nome, email),
-      approver:aprovado_por (nome, email)
+      user:user_id (nome, email, deleted_at),
+      approver:aprovado_por (nome, email, deleted_at)
     `)
     .eq('user_id', user.id) // Filtra apenas as do usuário logado
     .order('created_at', { ascending: false });
@@ -70,7 +88,25 @@ const fetchMyPendingRequests = async (): Promise<MovementWithDetails[]> => {
     console.error("Erro ao buscar minhas solicitações:", error.message);
     throw new Error(error.message);
   }
-  return data as MovementWithDetails[];
+  
+  // Processar dados para adicionar indicador de usuário excluído
+  const processedData = data.map(movement => ({
+    ...movement,
+    user: movement.user ? {
+      ...movement.user,
+      display_name: movement.user.deleted_at 
+        ? `${movement.user.nome || movement.user.email} (excluído)`
+        : movement.user.nome || movement.user.email
+    } : null,
+    approver: movement.approver ? {
+      ...movement.approver,
+      display_name: movement.approver.deleted_at 
+        ? `${movement.approver.nome || movement.approver.email} (excluído)`
+        : movement.approver.nome || movement.approver.email
+    } : null
+  }));
+  
+  return processedData as MovementWithDetails[];
 };
 
 export const useMyPendingRequests = () => {
@@ -88,8 +124,8 @@ const fetchPendingRequests = async (): Promise<MovementWithDetails[]> => {
     .select(`
       *,
       material:material_id (nome, codigo, unidade_medida, quantidade_atual),
-      user:user_id (nome, email),
-      approver:aprovado_por (nome, email)
+      user:user_id (nome, email, deleted_at),
+      approver:aprovado_por (nome, email, deleted_at)
     `)
     .eq('status', 'pendente')
     .order('created_at', { ascending: true });
@@ -98,7 +134,25 @@ const fetchPendingRequests = async (): Promise<MovementWithDetails[]> => {
     console.error("Erro ao buscar todas as solicitações pendentes:", error.message);
     throw new Error(error.message);
   }
-  return data as MovementWithDetails[];
+  
+  // Processar dados para adicionar indicador de usuário excluído
+  const processedData = data.map(movement => ({
+    ...movement,
+    user: movement.user ? {
+      ...movement.user,
+      display_name: movement.user.deleted_at 
+        ? `${movement.user.nome || movement.user.email} (excluído)`
+        : movement.user.nome || movement.user.email
+    } : null,
+    approver: movement.approver ? {
+      ...movement.approver,
+      display_name: movement.approver.deleted_at 
+        ? `${movement.approver.nome || movement.approver.email} (excluído)`
+        : movement.approver.nome || movement.approver.email
+    } : null
+  }));
+  
+  return processedData as MovementWithDetails[];
 };
 
 export const usePendingRequests = () => {

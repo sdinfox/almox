@@ -6,6 +6,7 @@ export type UserProfile = {
   nome: string;
   perfil: 'admin' | 'consulta' | 'retirada';
   assinatura_digital: string | null;
+  deleted_at: string | null;
   updated_at: string;
   created_at: string;
 };
@@ -47,6 +48,6 @@ export type Movimentacao = {
 // MovementWithDetails now includes all relevant material fields for display/checks
 export type MovementWithDetails = Movimentacao & {
   material: Pick<Material, 'nome' | 'codigo' | 'unidade_medida' | 'quantidade_atual'>;
-  user: Pick<UserProfile, 'nome' | 'email'>;
-  approver: Pick<UserProfile, 'nome' | 'email'> | null;
+  user: (Pick<UserProfile, 'nome' | 'email'> & { display_name?: string }) | null;
+  approver: (Pick<UserProfile, 'nome' | 'email'> & { display_name?: string }) | null;
 };

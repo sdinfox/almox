@@ -41,8 +41,8 @@ const MovementHistoryReport: React.FC = () => {
 
   const formatMovementForExport = (movement: MovementWithDetails) => {
     const formattedDate = format(new Date(movement.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR });
-    const userName = movement.user?.nome || movement.user?.email || 'Desconhecido';
-    const approverName = movement.approver?.nome || movement.approver?.email || 'N/A';
+    const userName = movement.user?.display_name || movement.user?.nome || movement.user?.email || 'Desconhecido';
+    const approverName = movement.approver?.display_name || movement.approver?.nome || movement.approver?.email || 'N/A';
 
     return {
       Data: formattedDate,
@@ -121,7 +121,7 @@ const MovementHistoryReport: React.FC = () => {
             <TableBody>
               {movements.slice(0, 50).map((movement) => { // Limita a 50 para visualização rápida
                 const formattedDate = format(new Date(movement.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR });
-                const userName = movement.user?.nome || movement.user?.email || 'Desconhecido';
+                const userName = movement.user?.display_name || movement.user?.nome || movement.user?.email || 'Desconhecido';
 
                 return (
                   <TableRow key={movement.id}>

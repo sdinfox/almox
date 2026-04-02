@@ -11,9 +11,11 @@ const UPDATE_PASSWORD_FUNCTION_URL = 'https://xleljhiyuhtvzjlxzawy.supabase.co/f
 // --- Fetch All Profiles ---
 const fetchProfiles = async (): Promise<UserProfile[]> => {
   // Nota: Esta query depende da política RLS 'profiles_select_all' permitir que admins leiam todos os perfis.
+  // Filtramos apenas usuários não excluídos para listagem normal
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
+    .is('deleted_at', null) // Apenas usuários não excluídos
     .order('nome', { ascending: true });
 
   if (error) {

@@ -71,7 +71,7 @@ const MovementTable: React.FC<MovementTableProps> = ({ movements, isLoading }) =
           {movements.map((movement) => {
             const typeInfo = typeMap[movement.tipo];
             const statusInfo = statusMap[movement.status];
-            const userName = movement.user?.nome || movement.user?.email || 'Usuário Desconhecido';
+            const userName = movement.user?.display_name || movement.user?.nome || movement.user?.email || 'Usuário Desconhecido';
             const formattedDate = format(new Date(movement.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR });
             const isSigned = movement.tipo === 'saida' && movement.assinatura_retirada;
 
