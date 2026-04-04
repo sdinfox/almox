@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
@@ -14,12 +16,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen flex flex-col bg-muted/40">
+    <div className="min-h-screen flex bg-background">
       <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
       
       <div 
         className={cn(
-          "flex flex-col flex-1 w-full transition-all duration-300",
+          "flex flex-col flex-1 min-h-screen transition-all duration-300",
           !isMobile ? "ml-64" : "ml-0"
         )}
       >
