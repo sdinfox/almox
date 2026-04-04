@@ -30,30 +30,8 @@ const Configuracoes = () => {
       
       <Separator />
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="max-w-2xl">
         <LogoSettings />
-        
-        {/* Informações do Sistema */}
-        <div className="space-y-4">
-          <Alert>
-            <Settings className="h-4 w-4" />
-            <AlertTitle>Soft Delete Implementado</AlertTitle>
-            <AlertDescription>
-              O sistema agora possui Soft Delete para usuários. Ao excluir um usuário, 
-              todas as suas movimentações são preservadas e o nome aparece como "Nome (excluído)".
-            </AlertDescription>
-          </Alert>
-
-          <Alert>
-            <ShieldAlert className="h-4 w-4" />
-            <AlertTitle>Reset Completo do Banco</AlertTitle>
-            <AlertDescription>
-              Para resetar completamente o banco de dados, utilize o script SQL 
-              <code className="ml-1 bg-gray-100 px-2 py-1 rounded text-sm">reset-completo-banco.sql</code>
-              disponível na pasta raiz do projeto.
-            </AlertDescription>
-          </Alert>
-        </div>
       </div>
     </div>
   );
