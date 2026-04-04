@@ -14,7 +14,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-muted/40 flex">
+    <div className="min-h-screen flex flex-col bg-muted/40">
       <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
       
       <div 
@@ -25,7 +25,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       >
         <Header setIsOpen={setIsSidebarOpen} />
         
-        <main className="flex-1 p-4 md:p-6 pb-8">
+        <main className="flex-1 p-4 md:p-6">
           {children}
         </main>
         
