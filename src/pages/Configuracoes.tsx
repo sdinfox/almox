@@ -44,7 +44,7 @@ const Configuracoes = () => {
             </AlertDescription>
           </Alert>
 
-          <Alert variant="outline">
+          <Alert>
             <ShieldAlert className="h-4 w-4" />
             <AlertTitle>Reset Completo do Banco</AlertTitle>
             <AlertDescription>
