@@ -30,8 +30,14 @@ export default function LicenseStatus() {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    // Recarregar apenas os dados, não a página
-    window.location.reload();
+    
+    // Simular recarregamento de dados sem recarregar a página
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Forçar atualização dos hooks
+    window.dispatchEvent(new Event('storage'));
+    
+    setIsRefreshing(false);
   };
 
   if (isLoading) {
