@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:prod": "node scripts/build.js",
     "build:dev": "vite build --mode development",
+    "obfuscate": "node scripts/obfuscate.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },

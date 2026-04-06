@@ -16,6 +16,7 @@ import Profile from "./pages/Profile";
 import Relatorios from "./pages/Relatorios"; // Importando a página de Relatórios
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { LicenseGuard } from "./components/license/LicenseGuard";
 
 const queryClient = new QueryClient();
 
@@ -25,27 +26,29 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            
-            {/* Rotas Protegidas */}
-            <Route element={<ProtectedRoute />}>
-              <Route path="/" element={<Index />} />
-              <Route path="/materiais" element={<Materiais />} />
-              <Route path="/movimentacoes" element={<Movimentacoes />} />
-              <Route path="/solicitacoes" element={<Solicitacoes />} />
-              <Route path="/minhas-solicitacoes" element={<MinhasSolicitacoes />} />
-              <Route path="/usuarios" element={<Usuarios />} />
-              <Route path="/configuracoes" element={<Configuracoes />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/relatorios" element={<Relatorios />} /> {/* Rota de Relatórios */}
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            </Route>
+        <LicenseGuard>
+          <AuthProvider>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              
+              {/* Rotas Protegidas */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/" element={<Index />} />
+                <Route path="/materiais" element={<Materiais />} />
+                <Route path="/movimentacoes" element={<Movimentacoes />} />
+                <Route path="/solicitacoes" element={<Solicitacoes />} />
+                <Route path="/minhas-solicitacoes" element={<MinhasSolicitacoes />} />
+                <Route path="/usuarios" element={<Usuarios />} />
+                <Route path="/configuracoes" element={<Configuracoes />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/relatorios" element={<Relatorios />} /> {/* Rota de Relatórios */}
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              </Route>
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
+        </LicenseGuard>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
