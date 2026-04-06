@@ -5,7 +5,7 @@ import { useLicense } from '@/license/LicenseManager';
 import { useVersionInfo } from '@/utils/versionDetector';
 import { Shield, AlertTriangle, CheckCircle, ExternalLink } from 'lucide-react';
 
-export function LicenseHeader() {
+export default function LicenseHeader() {
   const { licenseInfo, isLoading } = useLicense();
   const versionInfo = useVersionInfo();
 
