@@ -10,7 +10,13 @@
     "build:dev": "vite build --mode development",
     "obfuscate": "node scripts/obfuscate.js",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "setup": "node scripts/installer.js",
+    "setup:local": "node scripts/setup-local-server.js",
+    "setup:vercel": "node scripts/setup-vercel-server.js",
+    "test:deploy": "node scripts/test-deploy.js",
+    "service:install": "node scripts/install-service.js",
+    "full-setup": "node scripts/full-setup.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

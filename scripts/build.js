@@ -9,7 +9,26 @@ const __dirname = dirname(__filename);
 
 console.log('🚀 Iniciando build do AlmoxPro...');
 
-// 1. Build normal do Vite
+// 1. Ler configuração
+console.log('📋 Lendo configuração...');
+let config = {};
+try {
+  if (existsSync('./config.json')) {
+    config = JSON.parse(readFileSync('./config.json', 'utf8'));
+    console.log(`✅ Configuração encontrada: ${config.server?.mode || 'local'}`);
+  } else {
+    console.log('⚠️ Configuração não encontrada, usando padrão');
+    config = {
+      server: { mode: 'local' },
+      database: { type: 'postgresql' }
+    };
+  }
+} catch (error) {
+  console.log('⚠️ Erro ao ler configuração, usando padrão');
+  config = { server: { mode: 'local' }, database: { type: 'postgresql' } };
+}
+
+// 2. Build normal do Vite
 console.log('📦 Build do Vite...');
 try {
   execSync('npm run build', { stdio: 'inherit', cwd: join(__dirname, '..') });
@@ -19,12 +38,13 @@ try {
   process.exit(1);
 }
 
-// 2. Copiar arquivos essenciais
+// 3. Copiar arquivos essenciais
 console.log('📋 Copiando arquivos essenciais...');
 const essentialFiles = [
   'package.json',
   'README.md',
-  'LICENSE'
+  'LICENSE',
+  'config.json'
 ];
 
 const distDir = join(__dirname, '../dist');
@@ -39,23 +59,24 @@ for (const file of essentialFiles) {
   }
 }
 
-// 3. Criar scripts de instalação
+// 4. Criar scripts de instalação específicos
 console.log('🔧 Criando scripts de instalação...');
-createInstallationScripts();
+createInstallationScripts(config);
 
-// 4. Criar arquivo de configuração
-console.log('⚙️ Criando configuração...');
-createConfigFiles();
+// 5. Criar arquivos específicos do modo
+console.log('⚙️ Criando arquivos de configuração...');
+createModeSpecificFiles(config);
 
-// 5. Compactar para distribuição
+// 6. Compactar para distribuição
 console.log('📦 Compactando para distribuição...');
-createDistributionPackage();
+createDistributionPackage(config);
 
 console.log('✅ Build concluído com sucesso!');
 console.log('📁 Arquivos em: ./dist/');
+console.log(`🎯 Modo: ${config.server?.mode || 'local'}`);
 console.log('🚀 AlmoxPro pronto para distribuição!');
 
-function createInstallationScripts() {
+function createInstallationScripts(config) {
   const scriptsDir = join(distDir, 'scripts');
   if (!existsSync(scriptsDir)) {
     mkdirSync(scriptsDir, { recursive: true });
@@ -79,31 +100,24 @@ if errorlevel 1 (
 echo Node.js encontrado!
 echo.
 
-echo Instalando dependencias...
-call npm install --production
-
+echo Modo atual: ${config.server?.mode || 'local'}
 echo.
-echo Configurando banco de dados...
-echo Escolha uma opcao:
-echo 1 - PostgreSQL Local
-echo 2 - Supabase Nuvem
-set /p choice="Digite sua escolha (1 ou 2): "
 
-if "%choice%"=="1" goto postgresql
-if "%choice%"=="2" goto supabase
+if "${config.server?.mode}"=="vercel" goto vercel
+if "${config.server?.mode}"=="local" goto local
 
-echo Opcao invalida!
+echo Modo invalido!
 pause
 exit /b 1
 
-:postgresql
-echo Configurando PostgreSQL...
-node scripts/setup-postgresql.js
+:local
+echo Configurando Servidor Local...
+node scripts/setup-local-server.js
 goto end
 
-:supabase
-echo Configurando Supabase...
-node scripts/setup-supabase.js
+:vercel
+echo Configurando Servidor Vercel...
+node scripts/setup-vercel-server.js
 goto end
 
 :end
@@ -111,9 +125,7 @@ echo.
 echo Instalacao concluida!
 echo.
 echo Para iniciar o sistema:
-echo npm start
-echo.
-echo Acesse: http://localhost:3000
+npm start
 echo.
 pause
 `;
@@ -135,41 +147,26 @@ if ! command -v node &> /dev/null; then
 fi
 
 echo "Node.js encontrado!"
+echo "Modo atual: ${config.server?.mode || 'local'}"
 echo
 
-# Instalar dependências
-echo "Instalando dependências..."
-npm install --production
-
-echo
-echo "Configurando banco de dados..."
-echo "Escolha uma opção:"
-echo "1 - PostgreSQL Local"
-echo "2 - Supabase Nuvem"
-read -p "Digite sua escolha (1 ou 2): " choice
-
-case $choice in
-    1)
-        echo "Configurando PostgreSQL..."
-        node scripts/setup-postgresql.js
-        ;;
-    2)
-        echo "Configurando Supabase..."
-        node scripts/setup-supabase.js
-        ;;
-    *)
-        echo "Opção inválida!"
-        exit 1
-        ;;
-esac
+# Verificar modo
+if [ "${config.server?.mode}" = "vercel" ]; then
+    echo "Configurando Servidor Vercel..."
+    node scripts/setup-vercel-server.js
+elif [ "${config.server?.mode}" = "local" ]; then
+    echo "Configurando Servidor Local..."
+    node scripts/setup-local-server.js
+else
+    echo "Modo inválido!"
+    exit 1
+fi
 
 echo
 echo "Instalação concluída!"
 echo
 echo "Para iniciar o sistema:"
 echo "npm start"
-echo
-echo "Acesse: http://localhost:3000"
 echo
 `;
 
@@ -178,113 +175,131 @@ echo
   console.log('✅ Scripts de instalação criados');
 }
 
-function createConfigFiles() {
-  // Configuração PostgreSQL
-  const postgresConfig = `{
-  "database": {
-    "type": "postgresql",
-    "host": "localhost",
-    "port": 5432,
-    "database": "almoxpro",
-    "username": "almox_user",
-    "password": "",
-    "ssl": false
-  },
-  "server": {
-    "port": 3000,
-    "host": "localhost"
-  },
-  "license": {
-    "mode": "offline"
-  }
-}`;
+function createModeSpecificFiles(config) {
+  if (config.server?.mode === 'local') {
+    // Arquivos para modo local
+    const localReadme = `# AlmoxPro - Servidor Local
 
-  writeFileSync(join(distDir, 'config.postgresql.json'), postgresConfig);
-
-  // Configuração Supabase
-  const supabaseConfig = `{
-  "database": {
-    "type": "supabase",
-    "url": "",
-    "anonKey": "",
-    "serviceKey": ""
-  },
-  "server": {
-    "port": 3000,
-    "host": "localhost"
-  },
-  "license": {
-    "mode": "online"
-  }
-}`;
-
-  writeFileSync(join(distDir, 'config.supabase.json'), supabaseConfig);
-
-  // Configuração padrão
-  const defaultConfig = `{
-  "app": {
-    "name": "AlmoxPro",
-    "version": "1.0.0",
-    "mode": "production"
-  },
-  "database": {
-    "type": "postgresql",
-    "config": "config.postgresql.json"
-  },
-  "license": {
-    "server": "https://api.almoxpro.com",
-    "validationInterval": 3600000
-  }
-}`;
-
-  writeFileSync(join(distDir, 'config.json'), defaultConfig);
-
-  console.log('✅ Arquivos de configuração criados');
-}
-
-function createDistributionPackage() {
-  // Criar README de instalação
-  const installReadme = `# AlmoxPro - Guia de Instalação
-
-## Requisitos
-- Node.js 18 ou superior
-- PostgreSQL 12+ (para instalação local) OU
-- Conta Supabase (para instalação na nuvem)
-
-## Instalação Rápida
+## Inicialização
 
 ### Windows
-1. Execute \`install.bat\`
-2. Siga as instruções
-3. Acesse http://localhost:3000
+\`\`\`bash
+./scripts/install.bat
+\`\`\`
 
 ### Linux/Mac
-1. Execute \`chmod +x install.sh && ./install.sh\`
+\`\`\`bash
+chmod +x scripts/install.sh
+./scripts/install.sh
+\`\`\`
+
+## Configuração
+
+O sistema está configurado para modo local com PostgreSQL.
+
+### Acesso
+- URL: http://${config.server?.host || 'localhost'}:${config.server?.port || '3000'}
+- Banco: PostgreSQL local
+- Modo: Servidor Local
+
+## Administração
+
+- Iniciar: \`npm start\`
+- Parar: \`Ctrl + C\`
+- Serviço: \`npm run service:install\`
+
+---
+
+© 2024 AlmoxPro - Todos os direitos reservados
+`;
+
+    writeFileSync(join(distDir, 'README-LOCAL.md'), localReadme);
+    console.log('✅ README-LOCAL.md criado');
+
+  } else if (config.server?.mode === 'vercel') {
+    // Arquivos para modo Vercel
+    const vercelReadme = `# AlmoxPro - Servidor Vercel
+
+## Deploy Automático
+
+### Como fazer deploy
+
+1. Commit das mudanças:
+\`\`\`bash
+git add .
+git commit -m "Update"
+\`\`\`
+
+2. Push para o GitHub:
+\`\`\`bash
+git push origin main
+\`\`\`
+
+3. Deploy automático no Vercel
+
+### URLs
+
+- **Produção:** https://${config.server?.project || 'almoxpro'}.vercel.app
+- **API Validação:** https://${config.server?.project || 'almoxpro'}.vercel.app/api/validate-license
+- **API Ativação:** https://${config.server?.project || 'almoxpro'}.vercel.app/api/activate-license
+
+### Configuração
+
+- **Projeto Vercel:** ${config.server?.project || 'almoxpro'}
+- **Banco Supabase:** Configurado
+- **Modo:** Servidor Nuvem
+
+---
+
+© 2024 AlmoxPro - Todos os direitos reservados
+`;
+
+    writeFileSync(join(distDir, 'README-VERCEL.md'), vercelReadme);
+    console.log('✅ README-VERCEL.md criado');
+  }
+}
+
+function createDistributionPackage(config) {
+  // Criar README principal
+  const mainReadme = `# AlmoxPro - Sistema de Almoxarifado
+
+## Modo de Instalação: ${config.server?.mode === 'vercel' ? 'Servidor Nuvem (Vercel)' : 'Servidor Local (PostgreSQL)'}
+
+${config.server?.mode === 'vercel' ? `
+## Deploy na Nuvem
+
+Este sistema está configurado para deploy automático no Vercel.
+
+### Passos:
+1. Faça commit das mudanças
+2. Push para o GitHub
+3. Acesse: https://${config.server?.project || 'almoxpro'}.vercel.app
+
+### Documentação
+- Veja README-VERCEL.md para detalhes
+` : `
+## Servidor Local
+
+Este sistema está configurado para servidor local com PostgreSQL.
+
+### Passos:
+1. Execute: ./scripts/install.bat (Windows) ou ./scripts/install.sh (Linux/Mac)
 2. Siga as instruções
-3. Acesse http://localhost:3000
+3. Acesse: http://${config.server?.host || 'localhost'}:${config.server?.port || '3000'}
 
-## Configuração do Banco
+### Documentação
+- Veja README-LOCAL.md para detalhes
+`}
 
-### PostgreSQL Local
-1. Instale PostgreSQL
-2. Crie banco: \`CREATE DATABASE almoxpro;\`
-3. Execute o script de migração
-4. Configure em \`config.postgresql.json\`
+## Licenciamento
 
-### Supabase Nuvem
-1. Crie conta em https://supabase.com
-2. Crie novo projeto
-3. Copie URL e chaves
-4. Configure em \`config.supabase.json\`
-
-## Ativação da Licença
-
-1. Após instalação, acesse o sistema
-2. Clique em "Ativar Licença"
-3. Digite sua chave de licença
-4. Escolha seu plano
+O sistema requer licença para funcionar.
+- Trial: 15 dias grátis
+- Planos: Basic, Professional, Enterprise
+- Ativação: Digite a chave no sistema
 
 ## Suporte
+
 - Email: suporte@almoxpro.com
 - Documentação: https://docs.almoxpro.com
 
@@ -293,7 +308,7 @@ function createDistributionPackage() {
 © 2024 AlmoxPro - Todos os direitos reservados
 `;
 
-  writeFileSync(join(distDir, 'INSTALL.md'), installReadme);
+  writeFileSync(join(distDir, 'README.md'), mainReadme);
 
-  console.log('✅ Guia de instalação criado');
+  console.log('✅ README.md principal criado');
 }
