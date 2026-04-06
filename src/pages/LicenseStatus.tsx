@@ -26,6 +26,13 @@ import {
 export default function LicenseStatus() {
   const { licenseInfo, isLoading } = useLicense();
   const versionInfo = useVersionInfo();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    // Recarregar apenas os dados, não a página
+    window.location.reload();
+  };
 
   if (isLoading) {
     return (
@@ -76,9 +83,9 @@ export default function LicenseStatus() {
           <h1 className="text-3xl font-bold">Status da Licença</h1>
           <p className="text-muted-foreground">Gerencie sua licença AlmoxPro</p>
         </div>
-        <Button variant="outline" onClick={() => window.location.reload()}>
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Atualizar
+        <Button variant="outline" onClick={handleRefresh} disabled={isRefreshing}>
+          <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+          {isRefreshing ? 'Atualizando...' : 'Atualizar'}
         </Button>
       </div>
 
