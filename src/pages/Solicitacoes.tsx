@@ -24,13 +24,13 @@ const Solicitacoes = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Aprovação de Solicitações de Retirada</h1>
-      <p className="text-muted-foreground">Gerencie as solicitações de retirada de materiais pendentes.</p>
+      <h1 className="text-3xl font-bold">Gestão de Solicitações Pendentes</h1>
+      <p className="text-muted-foreground">Aprove ou rejeite solicitações de retirada e devolução de materiais.</p>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-xl font-semibold">
-            Solicitações Pendentes ({pendingRequests.length})
+            Solicitações Aguardando Análise ({pendingRequests.length})
           </CardTitle>
           <ListChecks className="h-6 w-6 text-primary" />
         </CardHeader>
