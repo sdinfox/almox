@@ -2,8 +2,27 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/api/(.*)",
+      "destination": "/api/$1.js"
+    },
+    {
+      "source": "/admin/(.*)",
+      "destination": "/admin/$1.js"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ]
+  ],
+  "functions": {
+    "api/validate-license.js": {
+      "maxDuration": 10
+    },
+    "api/activate-license.js": {
+      "maxDuration": 10
+    },
+    "api/webhooks.js": {
+      "maxDuration": 30
+    }
+  }
 }

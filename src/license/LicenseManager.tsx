@@ -164,20 +164,33 @@ export class LicenseManager {
 
   private async validateOnline(licenseKey: string): Promise<boolean> {
     try {
-      // Em produção, fazer chamada real para API
-      const response = await fetch('/api/validate-license', {
+      // URL da API de validação (ajustar para seu domínio)
+      const apiUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://almoxpro.vercel.app/api/validate-license'
+        : 'http://localhost:3000/api/validate-license';
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           key: licenseKey,
-          machineId: this.machineId
+          machineId: this.machineId,
+          version: '1.0.0'
         })
       });
-
+      
       if (response.ok) {
         const result = await response.json();
+        
+        // Salvar informações da licença
+        if (result.valid) {
+          localStorage.setItem('almox_plan', result.license.plan);
+          localStorage.setItem('almox_expires', result.license.expires_at);
+          localStorage.setItem('almox_features', JSON.stringify(result.license.features));
+        }
+        
         return result.valid;
       }
     } catch (error) {
@@ -218,19 +231,39 @@ export class LicenseManager {
 
   async activateLicense(licenseKey: string): Promise<boolean> {
     try {
-      const isValid = await this.validateOnline(licenseKey);
+      // URL da API de ativação
+      const apiUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://almoxpro.vercel.app/api/activate-license'
+        : 'http://localhost:3000/api/activate-license';
       
-      if (isValid) {
-        this.licenseKey = licenseKey;
-        localStorage.setItem('almox_license_key', licenseKey);
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          key: licenseKey,
+          machineId: this.machineId,
+          email: localStorage.getItem('user_email') || ''
+        })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
         
-        // Definir nova data de expiração baseada no plano
-        const expiry = new Date();
-        expiry.setMonth(expiry.getMonth() + 1); // Mensal por padrão
-        this.expiryDate = expiry.toISOString();
-        localStorage.setItem('almox_expiry_date', expiry.toISOString());
-        
-        return true;
+        if (result.success) {
+          this.licenseKey = licenseKey;
+          localStorage.setItem('almox_license_key', licenseKey);
+          
+          // Salvar informações da licença
+          localStorage.setItem('almox_plan', result.license.plan);
+          localStorage.setItem('almox_expires', result.license.expires_at);
+          localStorage.setItem('almox_features', JSON.stringify(result.license.features));
+          
+          this.expiryDate = result.license.expires_at;
+          
+          return true;
+        }
       }
     } catch (error) {
       console.error('Erro ao ativar licença:', error);
