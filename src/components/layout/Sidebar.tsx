@@ -12,6 +12,7 @@ import {
   X,
   ArrowLeftRight,
   BarChart3, // Importando o ícone de Relatórios
+  Shield, // Importando o ícone de Licença
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,6 +34,7 @@ const navItems: NavItem[] = [
   { href: '/solicitacoes', label: 'Aprovação', icon: ListChecks, roles: ['admin'] },
   { href: '/minhas-solicitacoes', label: 'Minhas Solicitações', icon: ListChecks, roles: ['retirada'] },
   { href: '/relatorios', label: 'Relatórios', icon: BarChart3, roles: ['admin', 'consulta'] }, // Adicionado Relatórios
+  { href: '/license-status', label: 'Licença', icon: Shield, roles: ['admin', 'consulta', 'retirada'] }, // Adicionado Status da Licença
   { href: '/usuarios', label: 'Usuários', icon: Users, roles: ['admin'] },
   { href: '/configuracoes', label: 'Configurações', icon: Settings, roles: ['admin'] },
 ];

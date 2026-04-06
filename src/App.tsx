@@ -14,6 +14,7 @@ import Usuarios from "./pages/Usuarios";
 import Configuracoes from "./pages/Configuracoes";
 import Profile from "./pages/Profile";
 import Relatorios from "./pages/Relatorios"; // Importando a página de Relatórios
+import LicenseStatus from "./pages/LicenseStatus"; // Importando a página de Status da Licença
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { LicenseGuard } from "./components/license/LicenseGuard";
@@ -42,6 +43,7 @@ const App = () => (
                 <Route path="/configuracoes" element={<Configuracoes />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/relatorios" element={<Relatorios />} /> {/* Rota de Relatórios */}
+                <Route path="/license-status" element={<LicenseStatus />} /> {/* Rota de Status da Licença */}
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               </Route>
 
