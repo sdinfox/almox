@@ -27,15 +27,16 @@ export default function LicenseStatus() {
   const { licenseInfo, isLoading } = useLicense();
   const versionInfo = useVersionInfo();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     
-    // Simular recarregamento de dados sem recarregar a página
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Forçar re-renderização do componente sem recarregar página
+    setRefreshKey(prev => prev + 1);
     
-    // Forçar atualização dos hooks
-    window.dispatchEvent(new Event('storage'));
+    // Simular tempo de atualização
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
     setIsRefreshing(false);
   };
@@ -82,7 +83,7 @@ export default function LicenseStatus() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6 max-w-4xl">
+    <div key={refreshKey} className="container mx-auto p-6 space-y-6 max-w-4xl">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

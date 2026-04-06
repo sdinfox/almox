@@ -47,8 +47,8 @@ export function LicenseGuard({ children }: LicenseGuardProps) {
           <AlertDescription>
             Erro ao verificar licença. Por favor, recarregue a página.
           </AlertDescription>
-          <Button onClick={() => window.location.reload()} className="mt-4">
-            Recarregar
+          <Button onClick={() => window.location.href = '/license-status'} className="mt-4">
+            Ir para Status da Licença
           </Button>
         </Alert>
       </div>
