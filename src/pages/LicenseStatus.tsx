@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 
 export default function LicenseStatus() {
-  const { licenseInfo, isLoading } = useLicense();
+  const { licenseInfo, isLoading } = useLicenseManager();
   const versionInfo = useVersionInfo();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);

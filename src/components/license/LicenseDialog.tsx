@@ -15,7 +15,7 @@ interface LicenseDialogProps {
 }
 
 export function LicenseDialog({ isOpen, onClose, onActivate }: LicenseDialogProps) {
-  const { licenseInfo, isLoading } = useLicense();
+  const { licenseInfo, isLoading } = useLicenseManager();
   const [licenseKey, setLicenseKey] = useState('');
   const [isActivating, setIsActivating] = useState(false);
   const [activationError, setActivationError] = useState('');

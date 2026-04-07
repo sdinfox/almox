@@ -6,7 +6,7 @@ import { useVersionInfo } from '@/utils/versionDetector';
 import { Shield, AlertTriangle, CheckCircle, ExternalLink } from 'lucide-react';
 
 export default function LicenseHeader() {
-  const { licenseInfo, isLoading } = useLicense();
+  const { licenseInfo, isLoading } = useLicenseManager();
   const versionInfo = useVersionInfo();
 
   if (isLoading || !licenseInfo) {
