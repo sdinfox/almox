@@ -1,12 +1,12 @@
 // Componente de diálogo de licença
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useLicense } from '@/license/LicenseManager';
-import { Clock, Shield, CheckCircle, AlertTriangle, Crown, Zap, Building } from 'lucide-react';
+import { useLicenseManager } from '@/license/LicenseManager';
+import { Shield, Zap, Crown, CheckCircle, AlertTriangle, Clock } from 'lucide-react';
 
 interface LicenseDialogProps {
   isOpen: boolean;
@@ -46,10 +46,10 @@ export function LicenseDialog({ isOpen, onClose, onActivate }: LicenseDialogProp
 
   const getPlanIcon = (plan: string) => {
     switch (plan) {
-      case 'basic': return <Shield className="w-5 h-5" />;
-      case 'professional': return <Zap className="w-5 h-5" />;
-      case 'enterprise': return <Crown className="w-5 h-5" />;
-      default: return <Shield className="w-5 h-5" />;
+      case 'basic': return React.createElement(Shield, { className: "w-5 h-5" });
+      case 'professional': return React.createElement(Zap, { className: "w-5 h-5" });
+      case 'enterprise': return React.createElement(Crown, { className: "w-5 h-5" });
+      default: return React.createElement(Shield, { className: "w-5 h-5" });
     }
   };
 
@@ -69,6 +69,7 @@ export function LicenseDialog({ isOpen, onClose, onActivate }: LicenseDialogProp
       icon: <Shield className="w-6 h-6" />,
       features: [
         'Até 5 usuários',
+        React.createElement(Shield, { className: "w-6 h-6" }),
         '1000 materiais',
         'Relatórios básicos',
         'Suporte por email'

@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
-import { useLicense } from '@/license/LicenseManager';
+import { useLicenseManager } from '@/license/LicenseManager';
 import { useVersionInfo } from '@/utils/versionDetector';
 import { 
   Shield, 

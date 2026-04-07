@@ -1,7 +1,7 @@
 // Componente Header com Status da Licença
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useLicense } from '@/license/LicenseManager';
+import { useLicenseManager } from '@/license/LicenseManager';
 import { useVersionInfo } from '@/utils/versionDetector';
 import { Shield, AlertTriangle, CheckCircle, ExternalLink } from 'lucide-react';
 
