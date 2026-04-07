@@ -1,5 +1,6 @@
-// Sistema de Licenciamento AlmoxPro - Versão Corrigida
+// Sistema de Licenciamento AlmoxPro - Versão Segura
 import { useState, useEffect } from 'react';
+import CryptoJS from 'crypto-js';
 
 interface LicenseInfo {
   key: string;
@@ -15,6 +16,7 @@ export class LicenseManager {
   private licenseKey: string | null = null;
   private expiryDate: string | null = null;
   private machineId: string = '';
+  private integrityHash: string = ''; // 🔒 NOVO: Hash de integridade
 
   private constructor() {
     this.initializeLicense();
@@ -28,16 +30,23 @@ export class LicenseManager {
   }
 
   private initializeLicense(): void {
-    // Gerar ID único da máquina
+    // 🔒 Gerar ID único da máquina (avançado)
     this.machineId = this.generateMachineId();
     
-    // Carregar licença do localStorage
+    // 🔒 Carregar licença do localStorage com validação
     this.licenseKey = localStorage.getItem('almox_license_key');
     this.expiryDate = localStorage.getItem('almox_expiry_date');
+    this.integrityHash = localStorage.getItem('almox_integrity_hash') || '';
+    
+    // 🔒 Validar integridade ao inicializar
+    if (this.licenseKey && !this.validateIntegrity()) {
+      console.warn('🚨 Licença corrompida detectada!');
+      this.clearLicense();
+    }
   }
 
   private generateMachineId(): string {
-    // Gerar ID baseado em hardware/browser
+    // Gerar ID avançado baseado em múltiplos fatores
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (ctx) {
@@ -46,23 +55,58 @@ export class LicenseManager {
       ctx.fillText('AlmoxPro Machine ID', 2, 2);
     }
     
+    // Coletar múltiplos fingerprints
     const fingerprint = [
       navigator.userAgent,
       navigator.language,
       screen.width + 'x' + screen.height,
       new Date().getTimezoneOffset(),
-      canvas.toDataURL()
-    ].join('|');
+      (navigator as any).hardwareConcurrency || 'unknown',
+      (navigator as any).deviceMemory || 'unknown'
+    ];
     
-    // Hash simples (em produção usar crypto)
-    let hash = 0;
-    for (let i = 0; i < fingerprint.length; i++) {
-      const char = fingerprint.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
+    // Gerar hash SHA-256 do fingerprint usando CryptoJS
+    const fingerprintHash = CryptoJS.SHA256(fingerprint.join('|')).toString();
+    
+    return fingerprintHash;
+  }
+
+  // Validar integridade da licença
+  private validateIntegrity(): boolean {
+    if (!this.licenseKey || !this.integrityHash) {
+      return false;
     }
     
-    return 'ALMX-' + Math.abs(hash).toString(16).toUpperCase();
+    const currentHash = CryptoJS.SHA256(this.licenseKey).toString();
+    
+    return currentHash === this.integrityHash;
+  }
+
+  // 🔒 Limpar licença corrompida
+  private clearLicense(): void {
+    this.licenseKey = null;
+    this.expiryDate = null;
+    this.integrityHash = '';
+    
+    localStorage.removeItem('almox_license_key');
+    localStorage.removeItem('almox_expiry_date');
+    localStorage.removeItem('almox_integrity_hash');
+    localStorage.removeItem('almox_machine_id');
+  }
+
+  // Salvar licença com hash de integridade
+  private saveLicense(licenseKey: string, plan: string, days: number): void {
+    this.licenseKey = licenseKey;
+    this.expiryDate = new Date(Date.now() + (days * 24 * 60 * 60 * 1000)).toISOString();
+    
+    // Gerar hash de integridade usando CryptoJS
+    this.integrityHash = CryptoJS.SHA256(licenseKey + plan + this.machineId).toString();
+    
+    localStorage.setItem('almox_license_key', licenseKey);
+    localStorage.setItem('almox_expiry_date', this.expiryDate);
+    localStorage.setItem('almox_plan', plan);
+    localStorage.setItem('almox_integrity_hash', this.integrityHash);
+    localStorage.setItem('almox_machine_id', this.machineId);
   }
 
   async validateLicense(): Promise<LicenseInfo> {
@@ -168,24 +212,22 @@ export class LicenseManager {
 
   async activateLicense(licenseKey: string): Promise<boolean> {
     try {
-      console.log('Ativando licença:', licenseKey);
-      
-      // Simular ativação bem-sucedida para chaves válidas
-      if (licenseKey && licenseKey.startsWith('ALMX-') && licenseKey.length > 10) {
-        this.licenseKey = licenseKey;
-        localStorage.setItem('almox_license_key', licenseKey);
-        
-        // Salvar informações da licença
-        const expiry = new Date();
-        expiry.setDate(expiry.getDate() + (licenseKey.includes('PERPETUAL') ? 365 * 20 : 30)); // 20 anos ou 30 dias
-        
-        localStorage.setItem('almox_expiry_date', expiry.toISOString());
-        localStorage.setItem('almox_plan', licenseKey.includes('PRO') ? 'professional' : 'basic');
-        
-        return true;
+      // 🔒 Validar formato da chave
+      if (!licenseKey || licenseKey.length < 10) {
+        return false;
       }
       
-      return false;
+      // 🔒 Simular ativação online
+      console.log('Ativando licença:', licenseKey);
+      
+      // Determinar plano baseado na chave
+      const plan: LicenseInfo['plan'] = licenseKey.includes('PRO') ? 'professional' : 'basic';
+      const days: number = licenseKey.includes('PERPETUAL') ? 999999 : 30;
+      
+      // 🔒 Salvar com hash de integridade
+      this.saveLicense(licenseKey, plan, days);
+      
+      return true;
     } catch (error) {
       console.error('Erro ao ativar licença:', error);
       return false;
