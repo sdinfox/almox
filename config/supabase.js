@@ -1,0 +1,6 @@
+// Configuração Supabase - Produção
+export const supabaseConfig = {
+  url: 'https://radokkkfpgvdnfenjixj.supabase.co',
+  anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhZG9ra2tmcGd2ZG5mZW5qaXhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1MTc2NzcsImV4cCI6MjA5MTA5MzY3N30.ceH7GRp9nog6hOwKDjU2UAYQ-tRF9IumkpRX-d8CDK8',
+  serviceKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhZG9ra2tmcGd2ZG5mZW5qaXhqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTUxNzY3NywiZXhwIjoyMDkxMDkzNjc3fQ.gzmXUFH5pPCTgHmGugR3DQHAfDfET_CyEy0XySGTy-I'
+};

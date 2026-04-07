@@ -1,10 +1,11 @@
 // API de Validação de Licenças - Vercel Serverless
 import { createClient } from '@supabase/supabase-js';
+import { supabaseConfig } from '../config/index.js';
 
 // Configuração do Supabase
 const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
+  supabaseConfig.url,
+  supabaseConfig.serviceKey
 );
 
 export default async function handler(req, res) {
