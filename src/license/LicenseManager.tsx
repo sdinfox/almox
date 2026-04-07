@@ -98,7 +98,7 @@ export class LicenseManager {
         return {
           ...licenseInfo,
           key: this.licenseKey,
-          plan: this.licenseKey.includes('PRO') ? 'professional' : 'basic',
+          plan: (this.licenseKey.includes('PRO') ? 'professional' : 'basic') as LicenseInfo['plan'],
           isValid: true,
           daysRemaining: this.licenseKey.includes('PERPETUAL') ? 999999 : 30
         };
@@ -195,7 +195,7 @@ export class LicenseManager {
   getLicenseInfo(): LicenseInfo {
     return {
       key: this.licenseKey || '',
-      plan: localStorage.getItem('almox_plan') || 'trial',
+      plan: (localStorage.getItem('almox_plan') || 'trial') as LicenseInfo['plan'],
       expiry: this.expiryDate || '',
       machineId: this.machineId,
       isValid: !this.isExpired(),

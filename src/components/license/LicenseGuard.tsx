@@ -1,6 +1,6 @@
 // Guarda de licença para proteger o sistema
 import { ReactNode, useEffect, useState } from 'react';
-import { LicenseManager } from '@/license/LicenseManager';
+import { LicenseManager, useLicenseManager } from '@/license/LicenseManager';
 import { LicenseDialog } from './LicenseDialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,6 @@ interface LicenseGuardProps {
 export function LicenseGuard({ children }: LicenseGuardProps) {
   const { licenseInfo, isLoading } = useLicenseManager();
   const [showLicenseDialog, setShowLicenseDialog] = useState(false);
-  const [gracePeriodUsed, setGracePeriodUsed] = useState(false);
 
   useEffect(() => {
     // Verificar licença a cada carregamento
