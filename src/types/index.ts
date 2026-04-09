@@ -1,10 +1,22 @@
 /// <reference path="./deno.d.ts" />
 
+export type Organization = {
+  id: string;
+  name: string;
+  plan_type: 'basic' | 'pro' | 'enterprise';
+  status: 'active' | 'inactive';
+  max_products: number;
+  max_users: number;
+  language: string;
+};
+
 export type UserProfile = {
   id: string;
   email: string;
   nome: string;
   perfil: 'admin' | 'consulta' | 'retirada';
+  organization_id: string;
+  organization?: Organization;
   assinatura_digital: string | null;
   deleted_at: string | null;
   updated_at: string;
@@ -13,6 +25,7 @@ export type UserProfile = {
 
 export type Material = {
   id: string;
+  organization_id: string;
   codigo: string;
   nome: string;
   descricao: string | null;
@@ -31,6 +44,7 @@ export type MovimentacaoStatus = 'pendente' | 'aprovada' | 'rejeitada';
 
 export type Movimentacao = {
   id: string;
+  organization_id: string;
   material_id: string;
   user_id: string;
   tipo: MovimentacaoTipo;
@@ -41,12 +55,11 @@ export type Movimentacao = {
   assinatura_retirada: string | null;
   status: MovimentacaoStatus;
   created_at: string;
-  updated_at: string;  // ✅ ADICIONADO
+  updated_at: string;
   aprovado_por: string | null;
   aprovado_at: string | null;
 };
 
-// MovementWithDetails now includes all relevant material fields for display/checks
 export type MovementWithDetails = Movimentacao & {
   material: Pick<Material, 'nome' | 'codigo' | 'unidade_medida' | 'quantidade_atual'>;
   user: (Pick<UserProfile, 'nome' | 'email'> & { display_name?: string }) | null;

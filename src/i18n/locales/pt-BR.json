@@ -1,0 +1,26 @@
+{
+  "common": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "loading": "Carregando...",
+    "actions": "Ações",
+    "search": "Buscar",
+    "welcome": "Bem-vindo, {{name}}!"
+  },
+  "dashboard": {
+    "title": "Painel de Controle",
+    "total_materials": "Total de Materiais",
+    "critical_stock": "Estoque Crítico",
+    "zero_stock": "Estoque Zero",
+    "recent_movements": "Movimentações Recentes"
+  },
+  "materials": {
+    "title": "Gestão de Materiais",
+    "new": "Novo Material",
+    "code": "Código",
+    "name": "Nome",
+    "category": "Categoria",
+    "current_stock": "Estoque Atual",
+    "min_stock": "Estoque Mínimo"
+  }
+}

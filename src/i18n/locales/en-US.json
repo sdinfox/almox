@@ -1,0 +1,26 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "actions": "Actions",
+    "search": "Search",
+    "welcome": "Welcome, {{name}}!"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "total_materials": "Total Materials",
+    "critical_stock": "Critical Stock",
+    "zero_stock": "Zero Stock",
+    "recent_movements": "Recent Movements"
+  },
+  "materials": {
+    "title": "Material Management",
+    "new": "New Material",
+    "code": "Code",
+    "name": "Name",
+    "category": "Category",
+    "current_stock": "Current Stock",
+    "min_stock": "Min Stock"
+  }
+}

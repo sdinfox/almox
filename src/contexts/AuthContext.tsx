@@ -3,6 +3,7 @@ import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfile } from '@/types';
 import { showError } from '@/utils/toast';
+import { useTranslation } from 'react-i18next';
 
 interface AuthContextType {
   session: Session | null;
@@ -18,6 +19,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { i18n } = useTranslation();
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -46,7 +48,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(true);
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('*, organization:organization_id(*)')
         .eq('id', userId)
         .single();
 
@@ -54,17 +56,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         showError("Erro ao carregar perfil: " + error.message);
         setProfile(null);
       } else {
-        // Verificar se usuário foi excluído (soft delete)
         const userProfile = data as UserProfile;
         if (userProfile.deleted_at) {
-          // Usuário excluído, fazer logout
           await supabase.auth.signOut();
-          showError("Sua conta foi desativada. Entre em contato com o administrador.");
+          showError("Sua conta foi desativada.");
           setProfile(null);
           setUser(null);
           setSession(null);
         } else {
           setProfile(userProfile);
+          // Ajustar idioma baseado na organização
+          if (userProfile.organization?.language) {
+            i18n.changeLanguage(userProfile.organization.language);
+          }
         }
       }
       setIsLoading(false);
@@ -76,7 +80,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setProfile(null);
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user, i18n]);
 
   return (
     <AuthContext.Provider value={{ session, user, profile, isLoading }}>
