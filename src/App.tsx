@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
+import AuthConfirmation from "./pages/AuthConfirmation";
 import SubscriptionExpired from "./pages/SubscriptionExpired";
 import Materiais from "./pages/Materiais";
 import Movimentacoes from "./pages/Movimentacoes";
@@ -31,6 +32,7 @@ const App = () => (
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
+            <Route path="/auth/callback" element={<AuthConfirmation />} />
             <Route path="/assinatura-vencida" element={<SubscriptionExpired />} />
             
             {/* Rotas Protegidas */}
