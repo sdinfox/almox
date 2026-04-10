@@ -1,17 +1,16 @@
 // API de Webhooks - Pagamentos e Assinaturas
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
-import { supabaseConfig } from '../config/index.js';
 
 // Configuração do Supabase
 const supabase = createClient(
-  supabaseConfig.url,
-  supabaseConfig.serviceKey
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
 );
 
-// Webhook secrets (temporários - podem ser movidos para config/ depois)
-const STRIPE_WEBHOOK_SECRET = 'whsec_development';
-const PAGARME_WEBHOOK_SECRET = 'pagarme_development';
+// Webhook secrets
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
+const PAGARME_WEBHOOK_SECRET = process.env.PAGARME_WEBHOOK_SECRET;
 
 export default async function handler(req, res) {
   // CORS headers
