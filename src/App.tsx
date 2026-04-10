@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
+import SignUp from "./pages/SignUp";
+import SubscriptionExpired from "./pages/SubscriptionExpired";
 import Materiais from "./pages/Materiais";
 import Movimentacoes from "./pages/Movimentacoes";
 import Solicitacoes from "./pages/Solicitacoes";
@@ -13,11 +15,9 @@ import MinhasSolicitacoes from "./pages/MinhasSolicitacoes";
 import Usuarios from "./pages/Usuarios";
 import Configuracoes from "./pages/Configuracoes";
 import Profile from "./pages/Profile";
-import Relatorios from "./pages/Relatorios"; // Importando a página de Relatórios
-import LicenseStatus from "./pages/LicenseStatus"; // Importando a página de Status da Licença
+import Relatorios from "./pages/Relatorios";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
-import { LicenseGuard } from "./components/license/LicenseGuard";
 
 const queryClient = new QueryClient();
 
@@ -27,30 +27,28 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <LicenseGuard>
-          <AuthProvider>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              
-              {/* Rotas Protegidas */}
-              <Route element={<ProtectedRoute />}>
-                <Route path="/" element={<Index />} />
-                <Route path="/materiais" element={<Materiais />} />
-                <Route path="/movimentacoes" element={<Movimentacoes />} />
-                <Route path="/solicitacoes" element={<Solicitacoes />} />
-                <Route path="/minhas-solicitacoes" element={<MinhasSolicitacoes />} />
-                <Route path="/usuarios" element={<Usuarios />} />
-                <Route path="/configuracoes" element={<Configuracoes />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/relatorios" element={<Relatorios />} /> {/* Rota de Relatórios */}
-                <Route path="/license-status" element={<LicenseStatus />} /> {/* Rota de Status da Licença */}
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              </Route>
+        <AuthProvider>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/assinatura-vencida" element={<SubscriptionExpired />} />
+            
+            {/* Rotas Protegidas */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/" element={<Index />} />
+              <Route path="/materiais" element={<Materiais />} />
+              <Route path="/movimentacoes" element={<Movimentacoes />} />
+              <Route path="/solicitacoes" element={<Solicitacoes />} />
+              <Route path="/minhas-solicitacoes" element={<MinhasSolicitacoes />} />
+              <Route path="/usuarios" element={<Usuarios />} />
+              <Route path="/configuracoes" element={<Configuracoes />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/relatorios" element={<Relatorios />} />
+            </Route>
 
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AuthProvider>
-        </LicenseGuard>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

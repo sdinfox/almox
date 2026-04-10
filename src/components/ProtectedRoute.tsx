@@ -1,19 +1,18 @@
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/layout/Layout';
 import { Skeleton } from './ui/skeleton';
 
 const ProtectedRoute: React.FC = () => {
-  const { session, isLoading } = useAuth();
+  const { session, profile, isLoading } = useAuth();
+  const location = useLocation();
 
   if (isLoading) {
-    // Exibe um layout de carregamento simples
     return (
       <div className="flex min-h-screen bg-muted/40">
         <div className="w-64 border-r bg-sidebar p-4 hidden md:block">
           <Skeleton className="h-8 w-3/4 mb-6" />
-          <Skeleton className="h-10 w-full mb-2" />
           <Skeleton className="h-10 w-full mb-2" />
           <Skeleton className="h-10 w-full mb-2" />
         </div>
@@ -32,6 +31,16 @@ const ProtectedRoute: React.FC = () => {
 
   if (!session) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Verificação de Paywall (Assinatura Expirada)
+  if (profile?.organization?.expires_at) {
+    const expiryDate = new Date(profile.organization.expires_at);
+    const isExpired = expiryDate < new Date();
+    
+    if (isExpired && location.pathname !== '/assinatura-vencida') {
+      return <Navigate to="/assinatura-vencida" replace />;
+    }
   }
 
   return (

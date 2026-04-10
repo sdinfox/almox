@@ -3,11 +3,12 @@
 export type Organization = {
   id: string;
   name: string;
-  plan_type: 'basic' | 'pro' | 'enterprise';
+  plan_type: 'basic' | 'pro' | 'enterprise' | 'trial';
   status: 'active' | 'inactive';
   max_products: number;
   max_users: number;
   language: string;
+  expires_at: string | null;
 };
 
 export type UserProfile = {
