@@ -1,7 +1,7 @@
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '@/integrations/supabase/client';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import Footer from '@/components/layout/Footer';
 
@@ -39,6 +39,7 @@ const Login = () => {
             }}
             theme="light"
             view="sign_in"
+            showLinks={false} // Esconde os links padrão para usarmos os nossos customizados
             redirectTo={window.location.origin}
             localization={{
               variables: {
@@ -46,24 +47,31 @@ const Login = () => {
                   email_label: 'Email',
                   password_label: 'Senha',
                   button_label: 'Entrar',
-                  social_provider_text: 'Ou entre com',
-                  link_text: 'Não tem uma conta? Cadastre-se',
-                },
-                sign_up: {
-                  email_label: 'Email',
-                  password_label: 'Senha',
-                  button_label: 'Cadastrar',
-                  link_text: 'Já tem uma conta? Entre',
-                },
-                forgotten_password: {
-                  link_text: 'Esqueceu sua senha?',
-                },
+                }
               },
             }}
           />
+          
+          <div className="flex flex-col items-center space-y-4 text-sm border-t pt-4">
+            <Link
+              to="/signup"
+              className="text-primary hover:underline font-semibold"
+            >
+              Não tem uma conta? Cadastre-se
+            </Link>
+            <Link
+              to="/login" // Placeholder ou rota de recuperação se existir
+              className="text-muted-foreground hover:underline"
+              onClick={(e) => {
+                e.preventDefault();
+                showSuccess("Funcionalidade de recuperação de senha em breve.");
+              }}
+            >
+              Esqueceu sua senha?
+            </Link>
+          </div>
         </div>
       </div>
-      {/* Adicionando o rodapé aqui para aparecer na tela de login */}
       <Footer />
     </div>
   );
